@@ -9,7 +9,7 @@ Bases tasks allows for better [Obsidian Bases](https://help.obsidian.md/bases) s
 `tasks.filter(value.toString().startsWith("- [ ]")).length`
 
 ### Completed Task Count
-`tasks.filter(value.toString().startsWith("- [X]")).length`
+`tasks.filter(value.toString().startsWith("- [x]")).length`
 
 ## Workflow
 - [ ] Track adding tasks
