@@ -12,9 +12,10 @@ Bases tasks allows for better [Obsidian Bases](https://help.obsidian.md/bases) s
 `tasks.filter(value.toString().startsWith("- [x]")).length`
 
 ## Workflow
+- [ ] Track document line differential over just task count
+- [ ] Fix Tasks plugin conflict
 - [ ] Customize property names setting to avoid overlap
 - [ ] Only track tasks in documents with certain tasks setting
-- [ ] Make sure no conflicts with Tasks plugin
 
 ## Support
 [<img style="float:left" src="https://user-images.githubusercontent.com/14358394/115450238-f39e8100-a21b-11eb-89d0-fa4b82cdbce8.png" width="200">](https://ko-fi.com/ocapraro)
