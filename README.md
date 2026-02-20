@@ -1,5 +1,15 @@
 # Bases Tasks
-Bases tasks allows for better [Obsidian Bases](https://help.obsidian.md/bases) support for todo list tasks. It tracks the number of completed and ongoing tasks in a document via the `completed-tasks` and `ongoing-tasks` properties. These can be collected and tracked using Bases.
+Bases tasks allows for better [Obsidian Bases](https://help.obsidian.md/bases) support for todo list tasks. It tracks the number of completed and ongoing tasks in a document via the `tasks` property. This can be collected and tracked using Bases.
+
+## Formulas
+### Total Task Count
+`tasks.length`
+
+### Ongoing Task Count
+`tasks.filter(value.toString().startsWith("- [ ]")).length`
+
+### Completed Task Count
+`tasks.filter(value.toString().startsWith("- [X]")).length`
 
 ## Workflow
 - [ ] Track adding tasks
