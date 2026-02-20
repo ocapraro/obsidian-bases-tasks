@@ -30,9 +30,13 @@ export default class BasesTasks extends Plugin {
     const properties = this.getProperties(rawFile) || {tasks:[]};
     if(this.arraysEqual(properties["tasks"], tasks))
       return;
+    const taskLengthDifferential = tasks.length - properties["tasks"].length;
     properties["tasks"] = tasks;
     const propertylessFile = rawFile.replace(/^---\n([\w\W]*)---/m,"");
+    const cursorPosition = editor.getCursor();
+    cursorPosition.line += taskLengthDifferential;
     editor.setValue(`---\n${stringifyYaml(properties)}\n---${propertylessFile}`);
+    editor.setCursor(cursorPosition);
   }
 
   // Extracts the properties from a note
