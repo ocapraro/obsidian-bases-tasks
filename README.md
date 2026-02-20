@@ -12,9 +12,6 @@ Bases tasks allows for better [Obsidian Bases](https://help.obsidian.md/bases) s
 `tasks.filter(value.toString().startsWith("- [x]")).length`
 
 ## Workflow
-- [ ] Track adding tasks
-- [ ] Track completing tasks
-- [ ] Integrate tags
 - [ ] Customize property names setting to avoid overlap
 - [ ] Only track tasks in documents with certain tasks setting
 - [ ] Make sure no conflicts with Tasks plugin
