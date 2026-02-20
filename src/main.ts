@@ -6,7 +6,7 @@ const DELAY = 350;
  * The main plugin
  */
 export default class BasesTasks extends Plugin {
-  gettingTasksTimeoutID:NodeJS.Timeout;
+  gettingTasksTimeoutID:number;
 
   async onload(): Promise<void> {
     this.registerEvent(this.app.workspace.on("editor-change", async(editor, info)=>{
@@ -18,7 +18,7 @@ export default class BasesTasks extends Plugin {
         clearTimeout(this.gettingTasksTimeoutID);
       this.gettingTasksTimeoutID = setTimeout(()=>{
         this.saveTasks(editor);
-      }, DELAY);
+      }, DELAY) as unknown as number;
     }))
   }
 
@@ -27,8 +27,8 @@ export default class BasesTasks extends Plugin {
     const rawFile = editor.getValue();
     const splitFile = rawFile.split("\n");
     const tasks = splitFile.filter(line=>line.match(/^- \[.\]/));
-    const properties = this.getProperties(rawFile) || {tasks:[]};
-    if(this.arraysEqual(properties["tasks"], tasks))
+    const properties:{tasks:string[]} = this.getProperties(rawFile);
+    if(this.strArraysEqual(properties["tasks"], tasks))
       return;
     const taskLengthDifferential = tasks.length - properties["tasks"].length;
     properties["tasks"] = tasks;
@@ -40,16 +40,17 @@ export default class BasesTasks extends Plugin {
   }
 
   // Extracts the properties from a note
-  getProperties(rawFile:string) {
+  getProperties(rawFile:string):{tasks:string[]} {
     const match = rawFile.match(/^---\n([\w\W]*)---/m);
     const properties = match?.[1];
-    if(!properties)
-      return null;
-    return parseYaml(properties);
+    const parsedProperties = parseYaml(properties||"") as {tasks:string[]};
+    if(!parsedProperties["tasks"])
+      return {...parsedProperties, tasks:[]};
+    return parsedProperties;
   }
 
   // Compares to arrays to see if each element is equal
-  arraysEqual(arr1:any[], arr2:any[]):boolean {
+  strArraysEqual(arr1:string[], arr2:string[]):boolean {
     if(arr1.length !== arr2.length)
       return false;
     return arr1.every((v, i) => v === arr2[i]);
