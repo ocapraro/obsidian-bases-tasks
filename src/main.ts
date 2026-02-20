@@ -1,6 +1,6 @@
 import {Editor, MarkdownView, parseYaml, Plugin, stringifyYaml} from 'obsidian';
 
-const DELAY = 300;
+const DELAY = 350;
 
 /**
  * The main plugin
