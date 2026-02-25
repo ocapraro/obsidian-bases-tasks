@@ -33,9 +33,13 @@ export default class BasesTasks extends Plugin {
     properties["tasks"] = tasks;
     const propertylessFile = rawFile.replace(/^---\n([\w\W]*)---/m,"");
     const newFile = `---\n${stringifyYaml(properties)}\n---${propertylessFile}`;
+
+    // Grab line length difference between new and old file, add it to the current cursor position
     const lineDifferential = newFile.split("\n").length - splitFile.length;
     const cursorPosition = editor.getCursor();
     cursorPosition.line += lineDifferential;
+
+    // Update file, and set cursor to proper location
     editor.setValue(newFile);
     editor.setCursor(cursorPosition);
   }
