@@ -37,8 +37,8 @@ export default class BasesTasks extends Plugin {
     if(this.strArraysEqual(properties["tasks"], tasks))
       return rawFile;
     properties["tasks"] = tasks;
-    const propertylessFile = rawFile.replace(/^---\n([\w\W]*)---/m,"");
-    const newFile = `---\n${stringifyYaml(properties)}\n---${propertylessFile}`;
+    const propertylessFile = rawFile.replace(/^---\n([\w\W]*)---\n?/m,"");
+    const newFile = `---\n${stringifyYaml(properties)}\n---\n${propertylessFile}`;
     return newFile;
   }
 
