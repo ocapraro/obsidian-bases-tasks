@@ -30,12 +30,13 @@ export default class BasesTasks extends Plugin {
     const properties:{tasks:string[]} = this.getProperties(rawFile);
     if(this.strArraysEqual(properties["tasks"], tasks))
       return;
-    const taskLengthDifferential = tasks.length - properties["tasks"].length;
     properties["tasks"] = tasks;
     const propertylessFile = rawFile.replace(/^---\n([\w\W]*)---/m,"");
+    const newFile = `---\n${stringifyYaml(properties)}\n---${propertylessFile}`;
+    const lineDifferential = newFile.split("\n").length - splitFile.length;
     const cursorPosition = editor.getCursor();
-    cursorPosition.line += taskLengthDifferential;
-    editor.setValue(`---\n${stringifyYaml(properties)}\n---${propertylessFile}`);
+    cursorPosition.line += lineDifferential;
+    editor.setValue(newFile);
     editor.setCursor(cursorPosition);
   }
 
