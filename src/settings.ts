@@ -29,6 +29,6 @@ export class BasesTasksSettingTab extends PluginSettingTab {
       button
       .setTooltip("Sync tasks")
       .setIcon("refresh-ccw")
-      .onClick(this.plugin.syncTasks)});
+      .onClick(()=>{this.plugin.syncTasks(this.plugin.app.vault)})});
   }
 }

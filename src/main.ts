@@ -1,4 +1,4 @@
-import {Editor, MarkdownView, parseYaml, Plugin, stringifyYaml} from 'obsidian';
+import {Editor, MarkdownView, Notice, parseYaml, Plugin, stringifyYaml, Vault} from 'obsidian';
 import { BasesTasksSettings, BasesTasksSettingTab, DEFAULT_SETTINGS } from 'settings';
 
 const DELAY = 350;
@@ -29,20 +29,30 @@ export default class BasesTasks extends Plugin {
     this.addSettingTab(new BasesTasksSettingTab(this.app, this));
   }
 
-  // Extracts the tasks from a note body and saves them as a property
-  saveTasks(editor:Editor) {
-    const rawFile = editor.getValue();
+  // takes in the raw contents of a note, and updates the tasks property based on the content
+  updateFileTasks(rawFile:string) {
     const splitFile = rawFile.split("\n");
     const tasks = splitFile.filter(line=>line.match(/^- \[.\]/));
-    const properties:{tasks:string[]} = this.getProperties(rawFile);
+    const properties = this.getProperties(rawFile);
     if(this.strArraysEqual(properties["tasks"], tasks))
-      return;
+      return rawFile;
     properties["tasks"] = tasks;
     const propertylessFile = rawFile.replace(/^---\n([\w\W]*)---/m,"");
     const newFile = `---\n${stringifyYaml(properties)}\n---${propertylessFile}`;
+    return newFile;
+  }
+
+  // Extracts the tasks from a note body and saves them as a property
+  saveTasks(editor:Editor) {
+    const rawFile = editor.getValue();
+    const newFile = this.updateFileTasks(rawFile);
+
+    // If theres no change, no need to overwrite
+    if(rawFile == newFile)
+      return
 
     // Grab line length difference between new and old file, add it to the current cursor position
-    const lineDifferential = newFile.split("\n").length - splitFile.length;
+    const lineDifferential = newFile.split("\n").length - rawFile.split("\n").length;
     const cursorPosition = editor.getCursor();
     cursorPosition.line += lineDifferential;
 
@@ -55,7 +65,7 @@ export default class BasesTasks extends Plugin {
   getProperties(rawFile:string):{tasks:string[]} {
     const match = rawFile.match(/^---\n([\w\W]*)---/m);
     const properties = match?.[1];
-    const parsedProperties = parseYaml(properties||"") as {tasks:string[]};
+    const parsedProperties = parseYaml(properties||"tasks:") as {tasks:string[]};
     if(!parsedProperties["tasks"])
       return {...parsedProperties, tasks:[]};
     return parsedProperties;
@@ -73,8 +83,25 @@ export default class BasesTasks extends Plugin {
   }
 
   // Go to each file and add it 
-  async syncTasks() {
-    
+  async syncTasks(vault:Vault) {
+    // Alert user that synicing has started
+    let notif = new Notice("Syncing Tasks...");
+    const allFiles = vault.getFiles().filter(f=>f.extension==="md");
+    for (let i = 0; i < allFiles.length; i++) {
+      notif.hide();
+      notif = new Notice(`Syncing Tasks: ${i+1}/${allFiles.length}`);
+      const file = allFiles[i];
+      if (!file)
+        continue;
+      const rawFile = await vault.read(file);
+      const newFile = this.updateFileTasks(rawFile);
+      if (rawFile == newFile)
+        continue;
+
+      await vault.modify(file,newFile);
+    }
+    notif.hide();
+    new Notice("Syncing Complete!", 3000);
   }
 }
 
