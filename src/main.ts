@@ -1,4 +1,5 @@
 import {Editor, MarkdownView, parseYaml, Plugin, stringifyYaml} from 'obsidian';
+import { BasesTasksSettings, BasesTasksSettingTab, DEFAULT_SETTINGS } from 'settings';
 
 const DELAY = 350;
 
@@ -6,9 +7,13 @@ const DELAY = 350;
  * The main plugin
  */
 export default class BasesTasks extends Plugin {
+  settings:BasesTasksSettings;
   gettingTasksTimeoutID:number;
 
   async onload(): Promise<void> {
+    await this.loadSettings();
+
+    // Save tasks to properties
     this.registerEvent(this.app.workspace.on("editor-change", async(editor, info)=>{
       if (!(info instanceof MarkdownView))
         return;
@@ -19,7 +24,9 @@ export default class BasesTasks extends Plugin {
       this.gettingTasksTimeoutID = setTimeout(()=>{
         this.saveTasks(editor);
       }, DELAY) as unknown as number;
-    }))
+    }));
+
+    this.addSettingTab(new BasesTasksSettingTab(this.app, this));
   }
 
   // Extracts the tasks from a note body and saves them as a property
@@ -54,11 +61,20 @@ export default class BasesTasks extends Plugin {
     return parsedProperties;
   }
 
+  async loadSettings() {
+		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData() as Partial<BasesTasksSettings>);
+	}
+
   // Compares to arrays to see if each element is equal
   strArraysEqual(arr1:string[], arr2:string[]):boolean {
     if(arr1.length !== arr2.length)
       return false;
     return arr1.every((v, i) => v === arr2[i]);
+  }
+
+  // Go to each file and add it 
+  async syncTasks() {
+    
   }
 }
 
