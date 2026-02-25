@@ -1,4 +1,4 @@
-import {Editor, MarkdownView, Notice, parseYaml, Plugin, stringifyYaml, Vault} from 'obsidian';
+import {Editor, MarkdownView, Menu, Notice, parseYaml, Plugin, stringifyYaml, Vault} from 'obsidian';
 import { BasesTasksSettings, BasesTasksSettingTab, DEFAULT_SETTINGS } from 'settings';
 
 const DELAY = 350;
@@ -13,7 +13,7 @@ export default class BasesTasks extends Plugin {
   async onload(): Promise<void> {
     await this.loadSettings();
 
-    // Save tasks to properties
+    // Save tasks to properties on editor
     this.registerEvent(this.app.workspace.on("editor-change", async(editor, info)=>{
       if (!(info instanceof MarkdownView))
         return;
@@ -25,6 +25,26 @@ export default class BasesTasks extends Plugin {
         this.saveTasks(editor);
       }, DELAY) as unknown as number;
     }));
+
+
+    this.registerEvent(
+      this.app.workspace.on(
+        "editor-menu",
+        (menu: Menu, editor: Editor) => {
+          const cursor = editor.getCursor();
+          const targetLine = editor.getLine(cursor.line);
+          
+          menu.addItem((item) => {
+            item
+              .setTitle("My Custom Action")
+              .setIcon("calendar")
+              .onClick(() => {
+                console.log("Clicked on:", editor.getCursor());
+              });
+          });
+        }
+      )
+    );
 
     this.addSettingTab(new BasesTasksSettingTab(this.app, this));
   }
@@ -71,10 +91,6 @@ export default class BasesTasks extends Plugin {
     return parsedProperties;
   }
 
-  async loadSettings() {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData() as Partial<BasesTasksSettings>);
-	}
-
   // Compares to arrays to see if each element is equal
   strArraysEqual(arr1:string[], arr2:string[]):boolean {
     if(arr1.length !== arr2.length)
@@ -102,6 +118,14 @@ export default class BasesTasks extends Plugin {
     }
     notif.hide();
     new Notice("Syncing Complete!", 3000);
+  }
+
+  async loadSettings() {
+		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData() as Partial<BasesTasksSettings>);
+	}
+
+  async saveSettings() {
+    await this.saveData(this.settings);
   }
 }
 

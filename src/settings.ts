@@ -30,5 +30,16 @@ export class BasesTasksSettingTab extends PluginSettingTab {
       .setTooltip("Sync tasks")
       .setIcon("refresh-ccw")
       .onClick(()=>{this.plugin.syncTasks(this.plugin.app.vault)})});
+
+    new Setting(containerEl)
+    .setName("Export to Daily Note Option")
+    .setDesc("Enables the menu option to move tasks to todays Daily Note")
+    .addToggle(t=>t
+      .setValue(this.plugin.settings.exportToDailyOption)
+      .onChange(async (value)=> {
+        this.plugin.settings.exportToDailyOption = value;
+        await this.plugin.saveSettings();
+      })
+    );
   }
 }
