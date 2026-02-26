@@ -1,5 +1,5 @@
 import BasesTasks from "main";
-import { PluginSettingTab, Setting, TFolder } from "obsidian";
+import { PluginSettingTab, Setting } from "obsidian";
 import FolderSuggest from "./FolderSuggest";
 
 export interface BasesTasksSettings {
@@ -20,28 +20,24 @@ export class BasesTasksSettingTab extends PluginSettingTab {
 
   display(): void {
     const {containerEl} = this;
-
     containerEl.empty();
-    new Setting(containerEl)
-    .setName("Bases Tasks")
-    .setHeading()
 
     new Setting(containerEl)
     .setName("Sync all tasks")
-    .setDesc("Loads all tasks found in notes into properties")
+    .setDesc("Loads all tasks found in notes into properties.")
     .addButton((button)=>{
       button
       .setTooltip("Sync tasks")
       .setIcon("refresh-ccw")
-      .onClick(()=>{this.plugin.syncTasks(this.plugin.app.vault)})});
+      .onClick(async()=>{await this.plugin.syncTasks(this.plugin.app.vault)})});
 
     new Setting(containerEl)
-    .setName("Daily Notes integration")
+    .setName("Daily notes integration")
     .setHeading()
 
     new Setting(containerEl)
-    .setName("Daily Notes Folder")
-    .setDesc("The path to your daily notes folder to enable daily notes integration")
+    .setName("Daily notes folder")
+    .setDesc("The path to your daily notes folder to enable daily notes integration.")
     .addSearch(search => {search
       .setValue(this.plugin.settings.dailyNoteFolderPath)
       .setPlaceholder("Search for a folder")
@@ -67,8 +63,8 @@ export class BasesTasksSettingTab extends PluginSettingTab {
     });
 
     this.dailyNotesSettings.push(new Setting(containerEl)
-    .setName("Move to Daily Note Option")
-    .setDesc("Enables the menu option to move tasks to todays Daily Note")
+    .setName("Move to daily note option")
+    .setDesc("Enables the menu option to move tasks to todays daily note.")
     .setClass("bases-tasks-daily-notes-option")
     .addToggle(t=>t
       .setValue(this.plugin.settings.moveToDailyOption)

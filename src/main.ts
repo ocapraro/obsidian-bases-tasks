@@ -40,7 +40,7 @@ export default class BasesTasks extends Plugin {
             menu.addItem((item) => {
               // move to daily note menu option
               item
-                .setTitle("Move to Daily Note")
+                .setTitle("Move to daily note")
                 .setIcon("calendar")
                 .onClick(async () => {
                   // Find the daily note
@@ -75,7 +75,7 @@ export default class BasesTasks extends Plugin {
                   splitOriginalFile.splice(cursor.line,1);
                   editor.setValue(splitOriginalFile.join("\n"));
                   editor.setCursor(cursor);
-                  new Notice("Task Moved");
+                  new Notice("Task moved");
                 });
             });
         }
@@ -137,11 +137,11 @@ export default class BasesTasks extends Plugin {
   // Go to each file and add it 
   async syncTasks(vault:Vault) {
     // Alert user that synicing has started
-    let notif = new Notice("Syncing Tasks...");
+    let notif = new Notice("Syncing tasks...");
     const allFiles = vault.getFiles().filter(f=>f.extension==="md");
     for (let i = 0; i < allFiles.length; i++) {
       notif.hide();
-      notif = new Notice(`Syncing Tasks: ${i+1}/${allFiles.length}`);
+      notif = new Notice(`Syncing tasks: ${i+1}/${allFiles.length}`);
       const file = allFiles[i];
       if (!file)
         continue;
@@ -153,7 +153,7 @@ export default class BasesTasks extends Plugin {
       await vault.modify(file,newFile);
     }
     notif.hide();
-    new Notice("Syncing Complete!", 3000);
+    new Notice("Syncing complete!", 3000);
   }
 
   async loadSettings() {
