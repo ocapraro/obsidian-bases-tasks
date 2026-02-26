@@ -1,6 +1,6 @@
 {
 	"name": "bases-tasks",
-	"version": "0.9.0",
+	"version": "0.9.1",
 	"description": "Obsidian Bases compatable stat tracking for tasks.",
 	"main": "main.js",
 	"type": "module",
