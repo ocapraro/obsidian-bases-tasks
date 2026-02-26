@@ -57,7 +57,6 @@ export class BasesTasksSettingTab extends PluginSettingTab {
 
       new FolderSuggest(this.app, search.inputEl)
       .onSelect(async (folder)=>{
-        console.log(folder);
         this.plugin.settings.dailyNoteFolderPath = folder.path;
         await this.plugin.saveSettings();
         this.dailyNotesSettings.forEach(setting =>{ 
