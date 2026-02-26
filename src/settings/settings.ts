@@ -4,13 +4,13 @@ import FolderSuggest from "./FolderSuggest";
 
 export interface BasesTasksSettings {
   dailyNoteFolderPath:string;
-  exportToDailyOption:boolean;
+  moveToDailyOption:boolean;
 }
 
 
 export const DEFAULT_SETTINGS: BasesTasksSettings = {
   dailyNoteFolderPath:"",
-  exportToDailyOption:false
+  moveToDailyOption:false
 }
 
 
@@ -67,13 +67,13 @@ export class BasesTasksSettingTab extends PluginSettingTab {
     });
 
     this.dailyNotesSettings.push(new Setting(containerEl)
-    .setName("Export to Daily Note Option")
+    .setName("Move to Daily Note Option")
     .setDesc("Enables the menu option to move tasks to todays Daily Note")
     .setClass("bases-tasks-daily-notes-option")
     .addToggle(t=>t
-      .setValue(this.plugin.settings.exportToDailyOption)
+      .setValue(this.plugin.settings.moveToDailyOption)
       .onChange(async (value)=> {
-        this.plugin.settings.exportToDailyOption = value;
+        this.plugin.settings.moveToDailyOption = value;
         await this.plugin.saveSettings();
       })
     ));

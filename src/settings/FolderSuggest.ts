@@ -4,7 +4,7 @@ import { AbstractInputSuggest, TFolder } from "obsidian";
 export default class FolderSuggest extends AbstractInputSuggest<TFolder> {  
   private onSelectCallback?: (folder: TFolder, evt: MouseEvent | KeyboardEvent) => void;
   protected getSuggestions(query: string): TFolder[] | Promise<TFolder[]> {
-    return this.app.vault.getAllFolders().filter(folder=>folder.name.toLowerCase().includes(query.toLowerCase()));
+    return this.app.vault.getAllFolders(true).filter(folder=>folder.name.toLowerCase().includes(query.toLowerCase()));
   }
   renderSuggestion(tFolder: TFolder, el: HTMLElement): void {
     el.setText(tFolder.path);

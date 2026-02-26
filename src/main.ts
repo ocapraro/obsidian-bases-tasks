@@ -35,14 +35,47 @@ export default class BasesTasks extends Plugin {
         (menu: Menu, editor: Editor) => {
           const cursor = editor.getCursor();
           const targetLine = editor.getLine(cursor.line);
-          // Make sure the user has enabled the export to daily note option, and they are clicking on a task
-          if(this.settings.exportToDailyOption && targetLine.match(this.taskRegex))
+          // Make sure the user has enabled the move to daily note option, and they are clicking on a task
+          if(this.settings.dailyNoteFolderPath && this.settings.moveToDailyOption && targetLine.match(this.taskRegex))
             menu.addItem((item) => {
+              // move to daily note menu option
               item
-                .setTitle("Export to Daily Note")
+                .setTitle("Move to Daily Note")
                 .setIcon("calendar")
-                .onClick(() => {
-                  console.log("Clicked on:", editor.getCursor());
+                .onClick(async () => {
+                  // Find the daily note
+                  const file = this.app.vault.getFileByPath(`${this.settings.dailyNoteFolderPath}/${new Date().toLocaleDateString("en-CA")}.md`);
+                  if(!file){
+                    new Notice("No daily note found")
+                    return;
+                  }
+
+                  // splice in the targeted task after the last task in the daily note or at the end
+                  const rawFile = await this.app.vault.read(file);
+                  const splitFile = rawFile.split("\n");
+                  splitFile.reverse();
+                  let match = false;
+                  for (let i = 0; i < splitFile.length; i++){
+                    const line = splitFile[i];
+                    if(!line?.match(this.taskRegex))
+                      continue;
+                    splitFile.splice(i,0,targetLine);
+                    match = true;
+                    break;
+                  }
+                  splitFile.reverse();
+                  if(!match)
+                    splitFile.push(targetLine);
+
+                  // update the properties, then update the note
+                  await this.app.vault.modify(file,this.updateFileTasks(splitFile.join("\n")));
+
+                  // remove task from current note
+                  const splitOriginalFile = editor.getValue().split("\n");
+                  splitOriginalFile.splice(cursor.line,1);
+                  editor.setValue(splitOriginalFile.join("\n"));
+                  editor.setCursor(cursor);
+                  new Notice("Task Moved");
                 });
             });
         }
