@@ -46,13 +46,11 @@ export class BasesTasksSettingTab extends PluginSettingTab {
       .setValue(this.plugin.settings.dailyNoteFolderPath)
       .setPlaceholder("Search for a folder")
       .onChange(async (value)=>{
-        this.dailyNotesSettings.forEach(setting =>{ 
-          if(setting.settingEl.hasClass("bases-tasks-disabled"))
-            setting.settingEl.classList.remove("bases-tasks-disabled");
-        });
-        if(value)
+        if(value){
+          this.enableSettings(this.dailyNotesSettings);
           return;
-        this.dailyNotesSettings.forEach(setting => setting.setClass("bases-tasks-disabled"))
+        }
+        this.disableSettings(this.dailyNotesSettings);
         this.plugin.settings.dailyNoteFolderPath = "";
         await this.plugin.saveSettings();
       });
@@ -69,9 +67,6 @@ export class BasesTasksSettingTab extends PluginSettingTab {
       });
     });
 
-    if(!this.plugin.settings.dailyNoteFolderPath)
-      return;
-
     this.dailyNotesSettings.push(new Setting(containerEl)
     .setName("Export to Daily Note Option")
     .setDesc("Enables the menu option to move tasks to todays Daily Note")
@@ -83,6 +78,24 @@ export class BasesTasksSettingTab extends PluginSettingTab {
         await this.plugin.saveSettings();
       })
     ));
+
+    if(!this.plugin.settings.dailyNoteFolderPath) {
+      this.disableSettings(this.dailyNotesSettings);
+    }
+    
+  }
+
+  enableSettings(settings:Setting[]) {
+    settings.forEach(setting =>{ 
+      if(setting.settingEl.hasClass("bases-tasks-disabled"))
+        setting.settingEl.classList.remove("bases-tasks-disabled");
+    });
+  }
+
+  disableSettings(settings:Setting[]) {
+    settings.forEach(setting =>{ 
+      setting.setClass("bases-tasks-disabled");
+    });
   }
 
 
