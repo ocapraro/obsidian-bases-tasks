@@ -37,6 +37,7 @@ export default class BasesTasks extends Plugin {
           const targetLine = editor.getLine(cursor.line);
           const dailyNotePath = `${this.settings.dailyNoteFolderPath}/${new Date().toLocaleDateString("en-CA")}.md`;
           const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+          const properties = this.getProperties(editor.getValue());
           
           if(
             this.settings.dailyNoteFolderPath && // Make sure the user has enabled the move to daily note option
@@ -53,10 +54,12 @@ export default class BasesTasks extends Plugin {
                   // Find the daily note
                   const file = this.app.vault.getFileByPath(dailyNotePath);
                   if(!file){
-                    new Notice("No daily note found")
+                    new Notice("No daily note found");
                     return;
                   }
-
+                  let newTask = targetLine;
+                  if(this.settings.moveToDailyWithTags && properties.tags?.length)
+                    newTask += " #" + properties.tags.join(" #");
                   // splice in the targeted task after the last task in the daily note or at the end
                   const rawFile = await this.app.vault.read(file);
                   const splitFile = rawFile.split("\n");
@@ -66,13 +69,13 @@ export default class BasesTasks extends Plugin {
                     const line = splitFile[i];
                     if(!line?.match(this.taskRegex))
                       continue;
-                    splitFile.splice(i,0,targetLine);
+                    splitFile.splice(i,0,newTask);
                     match = true;
                     break;
                   }
                   splitFile.reverse();
                   if(!match)
-                    splitFile.push(targetLine);
+                    splitFile.push(newTask);
 
                   // update the properties, then update the note
                   await this.app.vault.modify(file,this.updateFileTasks(splitFile.join("\n")));
@@ -127,7 +130,7 @@ export default class BasesTasks extends Plugin {
   }
 
   // Extracts the properties from a note
-  getProperties(rawFile:string):{tasks:string[]} {
+  getProperties(rawFile:string):{tasks:string[], tags?:string[]} {
     const match = rawFile.match(/^---\n([\w\W]*)---/m);
     const properties = match?.[1];
     const parsedProperties = parseYaml(properties||"tasks:") as {tasks:string[]};
