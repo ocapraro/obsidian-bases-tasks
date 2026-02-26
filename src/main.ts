@@ -71,10 +71,12 @@ export default class BasesTasks extends Plugin {
                   await this.app.vault.modify(file,this.updateFileTasks(splitFile.join("\n")));
 
                   // remove task from current note
-                  const splitOriginalFile = editor.getValue().split("\n");
-                  splitOriginalFile.splice(cursor.line,1);
-                  editor.setValue(splitOriginalFile.join("\n"));
-                  editor.setCursor(cursor);
+                  editor.replaceRange(
+                    "", 
+                    { line:cursor.line, ch: 0 },
+                    { line: cursor.line + 1, ch: 0 }
+                  );
+                  editor.setCursor({...editor.getCursor(), ch:cursor.ch});
                   new Notice("Task moved");
                 });
             });
