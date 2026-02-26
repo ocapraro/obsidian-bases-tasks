@@ -1,5 +1,5 @@
 import {Editor, MarkdownView, Menu, Notice, parseYaml, Plugin, stringifyYaml, Vault} from 'obsidian';
-import { BasesTasksSettings, BasesTasksSettingTab, DEFAULT_SETTINGS } from 'settings';
+import { BasesTasksSettings, BasesTasksSettingTab, DEFAULT_SETTINGS } from 'settings/settings';
 
 const DELAY = 350;
 
@@ -9,6 +9,7 @@ const DELAY = 350;
 export default class BasesTasks extends Plugin {
   settings:BasesTasksSettings;
   gettingTasksTimeoutID:number;
+  taskRegex = /^- \[.\]/;
 
   async onload(): Promise<void> {
     await this.loadSettings();
@@ -27,21 +28,23 @@ export default class BasesTasks extends Plugin {
     }));
 
 
+    // Add editor menu items
     this.registerEvent(
       this.app.workspace.on(
         "editor-menu",
         (menu: Menu, editor: Editor) => {
           const cursor = editor.getCursor();
           const targetLine = editor.getLine(cursor.line);
-          
-          menu.addItem((item) => {
-            item
-              .setTitle("My Custom Action")
-              .setIcon("calendar")
-              .onClick(() => {
-                console.log("Clicked on:", editor.getCursor());
-              });
-          });
+          // Make sure the user has enabled the export to daily note option, and they are clicking on a task
+          if(this.settings.exportToDailyOption && targetLine.match(this.taskRegex))
+            menu.addItem((item) => {
+              item
+                .setTitle("Export to Daily Note")
+                .setIcon("calendar")
+                .onClick(() => {
+                  console.log("Clicked on:", editor.getCursor());
+                });
+            });
         }
       )
     );
@@ -52,7 +55,7 @@ export default class BasesTasks extends Plugin {
   // takes in the raw contents of a note, and updates the tasks property based on the content
   updateFileTasks(rawFile:string) {
     const splitFile = rawFile.split("\n");
-    const tasks = splitFile.filter(line=>line.match(/^- \[.\]/));
+    const tasks = splitFile.filter(line=>line.match(this.taskRegex));
     const properties = this.getProperties(rawFile);
     if(this.strArraysEqual(properties["tasks"], tasks))
       return rawFile;
