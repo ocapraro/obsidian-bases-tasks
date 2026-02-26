@@ -33,8 +33,9 @@ export default class BasesTaskSetting extends Setting{
     this.dependencies.forEach(d=>d.show());
   }
 
-  disableDependencies() {
-    this.dependencies.forEach(d=>d.disable());
+  disableDependencies(conditional=true) {
+    if(conditional)
+      this.dependencies.forEach(d=>d.disable());
   }
 
   enableDependencies() {

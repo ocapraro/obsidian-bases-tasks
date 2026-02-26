@@ -1,6 +1,7 @@
 import BasesTasks from "main";
 import { PluginSettingTab, Setting } from "obsidian";
 import FolderSuggest from "./FolderSuggest";
+import BasesTaskSetting from "./BasesTaskSetting";
 
 export interface BasesTasksSettings {
   dailyNoteFolderPath:string;
@@ -16,7 +17,6 @@ export const DEFAULT_SETTINGS: BasesTasksSettings = {
 
 export class BasesTasksSettingTab extends PluginSettingTab {
   plugin: BasesTasks;
-  dailyNotesSettings:Setting[] = [];
 
   display(): void {
     const {containerEl} = this;
@@ -35,7 +35,7 @@ export class BasesTasksSettingTab extends PluginSettingTab {
     .setName("Daily notes integration")
     .setHeading()
 
-    new Setting(containerEl)
+    const dailyNoteFolderPath = new BasesTaskSetting(containerEl)
     .setName("Daily notes folder")
     .setDesc("The path to your daily notes folder to enable daily notes integration.")
     .addSearch(search => {search
@@ -43,10 +43,10 @@ export class BasesTasksSettingTab extends PluginSettingTab {
       .setPlaceholder("Search for a folder")
       .onChange(async (value)=>{
         if(value){
-          this.enableSettings(this.dailyNotesSettings);
+          dailyNoteFolderPath.enableDependencies();
           return;
         }
-        this.disableSettings(this.dailyNotesSettings);
+        dailyNoteFolderPath.disableDependencies();
         this.plugin.settings.dailyNoteFolderPath = "";
         await this.plugin.saveSettings();
       });
@@ -55,17 +55,13 @@ export class BasesTasksSettingTab extends PluginSettingTab {
       .onSelect(async (folder)=>{
         this.plugin.settings.dailyNoteFolderPath = folder.path;
         await this.plugin.saveSettings();
-        this.dailyNotesSettings.forEach(setting =>{ 
-          if(setting.settingEl.hasClass("bases-tasks-disabled"))
-            setting.settingEl.classList.remove("bases-tasks-disabled");
-        });
+        dailyNoteFolderPath.enableDependencies();
       });
     });
 
-    this.dailyNotesSettings.push(new Setting(containerEl)
+    dailyNoteFolderPath.addToDependencies(new BasesTaskSetting(containerEl)
     .setName("Move to daily note option")
     .setDesc("Enables the menu option to move tasks to todays daily note.")
-    .setClass("bases-tasks-daily-notes-option")
     .addToggle(t=>t
       .setValue(this.plugin.settings.moveToDailyOption)
       .onChange(async (value)=> {
@@ -74,23 +70,8 @@ export class BasesTasksSettingTab extends PluginSettingTab {
       })
     ));
 
-    if(!this.plugin.settings.dailyNoteFolderPath) {
-      this.disableSettings(this.dailyNotesSettings);
-    }
+    dailyNoteFolderPath.disableDependencies(!this.plugin.settings.dailyNoteFolderPath);
     
-  }
-
-  enableSettings(settings:Setting[]) {
-    settings.forEach(setting =>{ 
-      if(setting.settingEl.hasClass("bases-tasks-disabled"))
-        setting.settingEl.classList.remove("bases-tasks-disabled");
-    });
-  }
-
-  disableSettings(settings:Setting[]) {
-    settings.forEach(setting =>{ 
-      setting.setClass("bases-tasks-disabled");
-    });
   }
 
 
