@@ -6,12 +6,14 @@ import BasesTaskSetting from "./BasesTaskSetting";
 export interface BasesTasksSettings {
   dailyNoteFolderPath:string;
   moveToDailyOption:boolean;
+  moveToDailyWithTags:boolean;
 }
 
 
 export const DEFAULT_SETTINGS: BasesTasksSettings = {
   dailyNoteFolderPath:"",
-  moveToDailyOption:false
+  moveToDailyOption:false,
+  moveToDailyWithTags:false
 }
 
 
@@ -59,7 +61,7 @@ export class BasesTasksSettingTab extends PluginSettingTab {
       });
     });
 
-    dailyNoteFolderPath.addToDependencies(new BasesTaskSetting(containerEl)
+    const moveToDailyOption = new BasesTaskSetting(containerEl)
     .setName("Move to daily note option")
     .setDesc("Enables the menu option to move tasks to todays daily note.")
     .addToggle(t=>t
@@ -67,10 +69,28 @@ export class BasesTasksSettingTab extends PluginSettingTab {
       .onChange(async (value)=> {
         this.plugin.settings.moveToDailyOption = value;
         await this.plugin.saveSettings();
+        moveToDailyOption.showDependencies(this.plugin.settings.moveToDailyOption);
+        moveToDailyOption.hideDependencies(!this.plugin.settings.moveToDailyOption);
       })
-    ));
+    );
+
+    moveToDailyOption.addToDependencies(
+      new BasesTaskSetting(containerEl)
+      .setName("Keep note tags when moving to daily")
+      .setDesc("When moving tasks to daily note, add the tags on the note it came from")
+      .addToggle(t=>t
+        .setValue(this.plugin.settings.moveToDailyWithTags)
+        .onChange(async (value)=> {
+          this.plugin.settings.moveToDailyWithTags = value;
+          await this.plugin.saveSettings();
+        })
+      )
+    );
+
+    dailyNoteFolderPath.addToDependencies(moveToDailyOption);
 
     dailyNoteFolderPath.disableDependencies(!this.plugin.settings.dailyNoteFolderPath);
+    moveToDailyOption.hideDependencies(!this.plugin.settings.moveToDailyOption);
     
   }
 

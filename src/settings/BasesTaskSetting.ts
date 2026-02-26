@@ -25,21 +25,36 @@ export default class BasesTaskSetting extends Setting{
     this.dependencies.push(setting);
   }
 
-  hideDependencies() {
-    this.dependencies.forEach(d=>d.hide());
+  hideDependencies(conditional=true) {
+    if(conditional)
+      this.dependencies.forEach(d=>{
+        d.hide();
+        d.hideDependencies();
+      });
   }
 
-  showDependencies() {
-    this.dependencies.forEach(d=>d.show());
+  showDependencies(conditional=true) {
+    if(conditional)
+      this.dependencies.forEach(d=>{
+        d.show();
+        d.showDependencies();
+      });
   }
 
   disableDependencies(conditional=true) {
     if(conditional)
-      this.dependencies.forEach(d=>d.disable());
+      this.dependencies.forEach(d=>{
+        d.disable();
+        d.disableDependencies();
+      });
   }
 
-  enableDependencies() {
-    this.dependencies.forEach(d=>d.enable());
+  enableDependencies(conditional=true) {
+    if(conditional)
+      this.dependencies.forEach(d=>{
+        d.enable();
+        d.enableDependencies();
+      });
   }
 
   
