@@ -35,8 +35,15 @@ export default class BasesTasks extends Plugin {
         (menu: Menu, editor: Editor) => {
           const cursor = editor.getCursor();
           const targetLine = editor.getLine(cursor.line);
-          // Make sure the user has enabled the move to daily note option, and they are clicking on a task
-          if(this.settings.dailyNoteFolderPath && this.settings.moveToDailyOption && targetLine.match(this.taskRegex))
+          const dailyNotePath = `${this.settings.dailyNoteFolderPath}/${new Date().toLocaleDateString("en-CA")}.md`;
+          const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+          
+          if(
+            this.settings.dailyNoteFolderPath && // Make sure the user has enabled the move to daily note option
+            this.settings.moveToDailyOption && 
+            targetLine.match(this.taskRegex) && // they are clicking on a task
+            (view?.file?.path !== dailyNotePath) // and they are not already in the daily note
+          )
             menu.addItem((item) => {
               // move to daily note menu option
               item
@@ -44,7 +51,7 @@ export default class BasesTasks extends Plugin {
                 .setIcon("calendar")
                 .onClick(async () => {
                   // Find the daily note
-                  const file = this.app.vault.getFileByPath(`${this.settings.dailyNoteFolderPath}/${new Date().toLocaleDateString("en-CA")}.md`);
+                  const file = this.app.vault.getFileByPath(dailyNotePath);
                   if(!file){
                     new Notice("No daily note found")
                     return;
