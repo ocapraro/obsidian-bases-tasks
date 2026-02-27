@@ -2,7 +2,7 @@ import EditorMenuEvent from './events/EditorMenuEvent';
 import { TYPE_DETECT_DELAY } from './constants';
 import { MarkdownView, Notice, Plugin} from 'obsidian';
 import { BasesTasksSettings, BasesTasksSettingTab, DEFAULT_SETTINGS } from 'settings/settings';
-import { moveTaskToDailyNote, saveTasks } from 'commands';
+import { moveTaskToDailyNote, saveTasks, syncTasks } from 'commands';
 
 
 
@@ -46,6 +46,15 @@ export default class BasesTasks extends Plugin {
         await moveTaskToDailyNote(this, dailyNotePath, targetLine, editor)
       }
     });
+
+    this.addCommand({
+      id:"sync-tasks",
+      name:"Sync all vault tasks",
+      callback:async()=>{
+        await syncTasks(this.app.vault);
+      }
+    });
+
     this.addSettingTab(new BasesTasksSettingTab(this.app, this));
   }
 
