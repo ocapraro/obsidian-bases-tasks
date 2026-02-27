@@ -1,5 +1,8 @@
 import { Setting } from "obsidian";
 
+/**
+ * A settings class with some more functionality, like adding dependencies for other settings, or hiding/disabling them
+ */
 export default class BasesTaskSetting extends Setting{
   private dependencies:BasesTaskSetting[] = [];
 
