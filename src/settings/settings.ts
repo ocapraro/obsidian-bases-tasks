@@ -1,8 +1,8 @@
 import BasesTasks from "main";
 import { PluginSettingTab, Setting } from "obsidian";
-import FolderSuggest from "./FolderSuggest";
+import FolderSuggest from "./search/FolderSuggest";
 import BasesTaskSetting from "./BasesTaskSetting";
-import TagMultiSelect from "./TagMultiSelect";
+import TagMultiSelect from "./search/TagMultiSelect";
 
 export interface BasesTasksSettings {
   dailyNoteFolderPath:string;
