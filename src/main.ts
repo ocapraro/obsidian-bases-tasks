@@ -58,8 +58,9 @@ export default class BasesTasks extends Plugin {
                     return;
                   }
                   let newTask = targetLine;
-                  if(this.settings.moveToDailyWithTags && properties.tags?.length)
-                    newTask += " #" + properties.tags.join(" #");
+                  const filteredTags = properties.tags?.filter(t=>!newTask.match(new RegExp(`#${t}\\b`)))||[];
+                  if(this.settings.moveToDailyWithTags && filteredTags.length)
+                    newTask += " #" + filteredTags.join(" #");
                   // splice in the targeted task after the last task in the daily note or at the end
                   const rawFile = await this.app.vault.read(file);
                   const splitFile = rawFile.split("\n");
@@ -86,7 +87,10 @@ export default class BasesTasks extends Plugin {
                     { line:cursor.line, ch: 0 },
                     { line: cursor.line + 1, ch: 0 }
                   );
-                  editor.setCursor({...editor.getCursor(), ch:cursor.ch});
+                  const line = Math.min(cursor.line, editor.getValue().split("\n").length);
+                  const ch = Math.min(cursor.ch, editor.getLine(line).length);
+
+                  editor.setCursor({line,ch});
                   new Notice("Task moved");
                 });
             });
