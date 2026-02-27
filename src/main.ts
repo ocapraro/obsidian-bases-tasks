@@ -1,8 +1,8 @@
 import EditorMenuEvent from './events/EditorMenuEvent';
 import { TYPE_DETECT_DELAY } from './constants';
-import {Editor, getAllTags, MarkdownView, Notice, Plugin, Vault} from 'obsidian';
+import {getAllTags, MarkdownView, Notice, Plugin} from 'obsidian';
 import { BasesTasksSettings, BasesTasksSettingTab, DEFAULT_SETTINGS } from 'settings/settings';
-import { moveTaskToDailyNote, updateFileTasks } from 'commands';
+import { moveTaskToDailyNote, saveTasks } from 'commands';
 
 
 
@@ -25,7 +25,7 @@ export default class BasesTasks extends Plugin {
       if(this.gettingTasksTimeoutID !== null)
         clearTimeout(this.gettingTasksTimeoutID);
       this.gettingTasksTimeoutID = setTimeout(()=>{
-        this.saveTasks(editor);
+        saveTasks(editor);
       }, TYPE_DETECT_DELAY) as unknown as number;
     }));
 
@@ -49,46 +49,7 @@ export default class BasesTasks extends Plugin {
     this.addSettingTab(new BasesTasksSettingTab(this.app, this));
   }
 
-  // Extracts the tasks from a note body and saves them as a property
-  saveTasks(editor:Editor) {
-    const rawFile = editor.getValue();
-    const newFile = updateFileTasks(rawFile);
-
-    // If theres no change, no need to overwrite
-    if(rawFile == newFile)
-      return
-
-    // Grab line length difference between new and old file, add it to the current cursor position
-    const lineDifferential = newFile.split("\n").length - rawFile.split("\n").length;
-    const cursorPosition = editor.getCursor();
-    cursorPosition.line += lineDifferential;
-
-    // Update file, and set cursor to proper location
-    editor.setValue(newFile);
-    editor.setCursor(cursorPosition);
-  }
-
-  // Go to each file and add it 
-  async syncTasks(vault:Vault) {
-    // Alert user that synicing has started
-    let notif = new Notice("Syncing tasks...");
-    const allFiles = vault.getFiles().filter(f=>f.extension==="md");
-    for (let i = 0; i < allFiles.length; i++) {
-      notif.hide();
-      notif = new Notice(`Syncing tasks: ${i+1}/${allFiles.length}`);
-      const file = allFiles[i];
-      if (!file)
-        continue;
-      const rawFile = await vault.read(file);
-      const newFile = updateFileTasks(rawFile);
-      if (rawFile == newFile)
-        continue;
-
-      await vault.modify(file,newFile);
-    }
-    notif.hide();
-    new Notice("Syncing complete!", 3000);
-  }
+  
 
   // Gets all the tags from the vault
   getAllVaultTags(): Set<string> {

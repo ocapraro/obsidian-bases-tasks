@@ -1,6 +1,6 @@
 import { PROPERTIES_REGEX, TASK_REGEX } from "./constants";
 import BasesTasks from "main";
-import { Editor, Notice, parseYaml, stringifyYaml } from "obsidian";
+import { Editor, Notice, parseYaml, stringifyYaml, Vault } from "obsidian";
 import Properties from "Properties";
 import { strArraysEqual } from "utils";
 
@@ -95,4 +95,52 @@ export function updateFileTasks(rawFile:string) {
   const propertylessFile = rawFile.replace(PROPERTIES_REGEX,"");
   const newFile = `---\n${stringifyYaml(properties)}\n---\n${propertylessFile}`;
   return newFile;
+}
+
+/**
+ * Extracts the tasks from the current note body, and saves them as a property
+ * @param editor the editor of the current note
+ * @returns 
+ */
+export function saveTasks(editor:Editor) {
+  const rawFile = editor.getValue();
+  const newFile = updateFileTasks(rawFile);
+
+  // If theres no change, no need to overwrite
+  if(rawFile == newFile)
+    return
+
+  // Grab line length difference between new and old file, add it to the current cursor position
+  const lineDifferential = newFile.split("\n").length - rawFile.split("\n").length;
+  const cursorPosition = editor.getCursor();
+  cursorPosition.line += lineDifferential;
+
+  // Update file, and set cursor to proper location
+  editor.setValue(newFile);
+  editor.setCursor(cursorPosition);
+}
+
+/**
+ * Go to each note in a vault, scan it for tasks, and add them as a property.
+ * @param vault the vault to search through
+ */
+export async function syncTasks(vault:Vault) {
+  // Alert user that synicing has started
+  let notif = new Notice("Syncing tasks...");
+  const allFiles = vault.getFiles().filter(f=>f.extension==="md");
+  for (let i = 0; i < allFiles.length; i++) {
+    notif.hide();
+    notif = new Notice(`Syncing tasks: ${i+1}/${allFiles.length}`);
+    const file = allFiles[i];
+    if (!file)
+      continue;
+    const rawFile = await vault.read(file);
+    const newFile = updateFileTasks(rawFile);
+    if (rawFile == newFile)
+      continue;
+
+    await vault.modify(file,newFile);
+  }
+  notif.hide();
+  new Notice("Syncing complete!", 3000);
 }

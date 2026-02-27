@@ -3,6 +3,7 @@ import { PluginSettingTab, Setting } from "obsidian";
 import FolderSuggest from "./search/FolderSuggest";
 import BasesTaskSetting from "./BasesTaskSetting";
 import TagMultiSelect from "./search/TagMultiSelect";
+import { syncTasks } from "commands";
 
 export interface BasesTasksSettings {
   dailyNoteFolderPath:string;
@@ -34,7 +35,7 @@ export class BasesTasksSettingTab extends PluginSettingTab {
       button
       .setTooltip("Sync tasks")
       .setIcon("refresh-ccw")
-      .onClick(async()=>{await this.plugin.syncTasks(this.plugin.app.vault)})});
+      .onClick(async()=>{await syncTasks(this.plugin.app.vault)})});
 
     new Setting(containerEl)
     .setName("Daily notes integration")
