@@ -1,9 +1,8 @@
 import EditorMenuEvent from './events/EditorMenuEvent';
-import { PROPERTIES_REGEX, TASK_REGEX, TYPE_DETECT_DELAY } from './constants';
-import {Editor, getAllTags, MarkdownView, Notice, Plugin, stringifyYaml, Vault} from 'obsidian';
+import { TYPE_DETECT_DELAY } from './constants';
+import {Editor, getAllTags, MarkdownView, Notice, Plugin, Vault} from 'obsidian';
 import { BasesTasksSettings, BasesTasksSettingTab, DEFAULT_SETTINGS } from 'settings/settings';
-import { strArraysEqual } from 'utils';
-import { getProperties, moveTaskToDailyNote } from 'commands';
+import { moveTaskToDailyNote, updateFileTasks } from 'commands';
 
 
 
@@ -50,23 +49,10 @@ export default class BasesTasks extends Plugin {
     this.addSettingTab(new BasesTasksSettingTab(this.app, this));
   }
 
-  // takes in the raw contents of a note, and updates the tasks property based on the content
-  updateFileTasks(rawFile:string) {
-    const splitFile = rawFile.split("\n");
-    const tasks = splitFile.filter(line=>line.match(TASK_REGEX));
-    const properties = getProperties(rawFile);
-    if(strArraysEqual(properties["tasks"], tasks))
-      return rawFile;
-    properties["tasks"] = tasks;
-    const propertylessFile = rawFile.replace(PROPERTIES_REGEX,"");
-    const newFile = `---\n${stringifyYaml(properties)}\n---\n${propertylessFile}`;
-    return newFile;
-  }
-
   // Extracts the tasks from a note body and saves them as a property
   saveTasks(editor:Editor) {
     const rawFile = editor.getValue();
-    const newFile = this.updateFileTasks(rawFile);
+    const newFile = updateFileTasks(rawFile);
 
     // If theres no change, no need to overwrite
     if(rawFile == newFile)
@@ -94,7 +80,7 @@ export default class BasesTasks extends Plugin {
       if (!file)
         continue;
       const rawFile = await vault.read(file);
-      const newFile = this.updateFileTasks(rawFile);
+      const newFile = updateFileTasks(rawFile);
       if (rawFile == newFile)
         continue;
 

@@ -1,7 +1,8 @@
 import { PROPERTIES_REGEX, TASK_REGEX } from "./constants";
 import BasesTasks from "main";
-import { Editor, Notice, parseYaml } from "obsidian";
+import { Editor, Notice, parseYaml, stringifyYaml } from "obsidian";
 import Properties from "Properties";
+import { strArraysEqual } from "utils";
 
 /**
  * 
@@ -49,7 +50,7 @@ export async function moveTaskToDailyNote(
     splitFile.push(newTask);
 
   // update the properties, then update the note
-  await plugin.app.vault.modify(file,plugin.updateFileTasks(splitFile.join("\n")));
+  await plugin.app.vault.modify(file,updateFileTasks(splitFile.join("\n")));
 
   // remove task from current note
   editor.replaceRange(
@@ -76,4 +77,22 @@ export function getProperties(rawFile:string):Properties {
   if(!parsedProperties["tasks"])
     return {...parsedProperties, tasks:[]};
   return parsedProperties;
+}
+
+
+/**
+ * Takes in the raw contents of a note, and updates the tasks property based on the content
+ * @param rawFile the raw note contents
+ * @returns the updated note
+ */
+export function updateFileTasks(rawFile:string) {
+  const splitFile = rawFile.split("\n");
+  const tasks = splitFile.filter(line=>line.match(TASK_REGEX));
+  const properties = getProperties(rawFile);
+  if(strArraysEqual(properties["tasks"], tasks))
+    return rawFile;
+  properties["tasks"] = tasks;
+  const propertylessFile = rawFile.replace(PROPERTIES_REGEX,"");
+  const newFile = `---\n${stringifyYaml(properties)}\n---\n${propertylessFile}`;
+  return newFile;
 }
