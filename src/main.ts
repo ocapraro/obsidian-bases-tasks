@@ -58,7 +58,9 @@ export default class BasesTasks extends Plugin {
                     return;
                   }
                   let newTask = targetLine;
-                  const filteredTags = properties.tags?.filter(t=>!newTask.match(new RegExp(`#${t}\\b`)))||[];
+                  let filteredTags = properties.tags?.filter(t=>!newTask.match(new RegExp(`#${t}\\b`)))||[];
+                  if(this.settings.taskTagsToIgnore)
+                    filteredTags = filteredTags.filter(t=>!this.settings.taskTagsToIgnore.split(",").includes("#"+t));
                   if(this.settings.moveToDailyWithTags && filteredTags.length)
                     newTask += " #" + filteredTags.join(" #");
                   // splice in the targeted task after the last task in the daily note or at the end
@@ -172,26 +174,26 @@ export default class BasesTasks extends Plugin {
     new Notice("Syncing complete!", 3000);
   }
 
-  async loadSettings() {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData() as Partial<BasesTasksSettings>);
-	}
-
   // Gets all the tags from the vault
   getAllVaultTags(): Set<string> {
     const tags = new Set<string>();
-
+    
     for (const file of this.app.vault.getMarkdownFiles()) {
       const cache = this.app.metadataCache.getFileCache(file);
-      if (!cache) continue;
-
+      if (!cache) 
+        continue;
       const fileTags = getAllTags(cache);
-      if (!fileTags) continue;
-
-      for (const t of fileTags) tags.add(t);
+      if (!fileTags) 
+        continue;
+      for (const t of fileTags) 
+        tags.add(t);
     }
-
     return tags;
   }
+
+  async loadSettings() {
+		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData() as Partial<BasesTasksSettings>);
+	}
 
   async saveSettings() {
     await this.saveData(this.settings);
