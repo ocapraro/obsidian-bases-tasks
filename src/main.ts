@@ -1,8 +1,9 @@
-import EditorMenuEvent from 'events/EditorMenuEvent';
+import EditorMenuEvent from './events/EditorMenuEvent';
 import { PROPERTIES_REGEX, TASK_REGEX, TYPE_DETECT_DELAY } from './constants';
-import {Editor, getAllTags, MarkdownView, Menu, Notice, parseYaml, Plugin, stringifyYaml, Vault} from 'obsidian';
+import {Editor, getAllTags, MarkdownView, Notice, parseYaml, Plugin, stringifyYaml, Vault} from 'obsidian';
 import { BasesTasksSettings, BasesTasksSettingTab, DEFAULT_SETTINGS } from 'settings/settings';
 import { strArraysEqual } from 'utils';
+import { moveTaskToDailyNote } from 'commands';
 
 
 
@@ -30,6 +31,23 @@ export default class BasesTasks extends Plugin {
     }));
 
     new EditorMenuEvent(this);
+
+    this.addCommand({
+      id:"move-task-to-daily-note",
+      name:"Move task to daily note",
+      callback:()=>{
+        const editor = this.app.workspace.activeEditor?.editor;
+        if (!editor) {
+          new Notice("No active editor");
+          return;
+        }
+        const cursor = editor.getCursor();
+        const targetLine = editor.getLine(cursor.line);
+        const dailyNotePath = `${this.settings.dailyNoteFolderPath}/${new Date().toLocaleDateString("en-CA")}.md`;
+        const properties = this.getProperties(editor.getValue());
+        moveTaskToDailyNote(this, dailyNotePath, targetLine, properties, editor, cursor)
+      }
+    })
     this.addSettingTab(new BasesTasksSettingTab(this.app, this));
   }
 
