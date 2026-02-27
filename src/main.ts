@@ -1,3 +1,4 @@
+import EditorMenuEvent from 'events/EditorMenuEvent';
 import { PROPERTIES_REGEX, TASK_REGEX, TYPE_DETECT_DELAY } from './constants';
 import {Editor, getAllTags, MarkdownView, Menu, Notice, parseYaml, Plugin, stringifyYaml, Vault} from 'obsidian';
 import { BasesTasksSettings, BasesTasksSettingTab, DEFAULT_SETTINGS } from 'settings/settings';
@@ -28,79 +29,7 @@ export default class BasesTasks extends Plugin {
       }, TYPE_DETECT_DELAY) as unknown as number;
     }));
 
-
-    // Add editor menu items
-    this.registerEvent(
-      this.app.workspace.on(
-        "editor-menu",
-        (menu: Menu, editor: Editor) => {
-          const cursor = editor.getCursor();
-          const targetLine = editor.getLine(cursor.line);
-          const dailyNotePath = `${this.settings.dailyNoteFolderPath}/${new Date().toLocaleDateString("en-CA")}.md`;
-          const view = this.app.workspace.getActiveViewOfType(MarkdownView);
-          const properties = this.getProperties(editor.getValue());
-          
-          if(
-            this.settings.dailyNoteFolderPath && // Make sure the user has enabled the move to daily note option
-            this.settings.moveToDailyOption && 
-            targetLine.match(TASK_REGEX) && // they are clicking on a task
-            (view?.file?.path !== dailyNotePath) // and they are not already in the daily note
-          )
-            menu.addItem((item) => {
-              // move to daily note menu option
-              item
-                .setTitle("Move to daily note")
-                .setIcon("calendar")
-                .onClick(async () => {
-                  // Find the daily note
-                  const file = this.app.vault.getFileByPath(dailyNotePath);
-                  if(!file){
-                    new Notice("No daily note found");
-                    return;
-                  }
-                  let newTask = targetLine;
-                  let filteredTags = properties.tags?.filter(t=>!newTask.match(new RegExp(`#${t}\\b`)))||[];
-                  if(this.settings.taskTagsToIgnore)
-                    filteredTags = filteredTags.filter(t=>!this.settings.taskTagsToIgnore.split(",").includes("#"+t));
-                  if(this.settings.moveToDailyWithTags && filteredTags.length)
-                    newTask += " #" + filteredTags.join(" #");
-                  // splice in the targeted task after the last task in the daily note or at the end
-                  const rawFile = await this.app.vault.read(file);
-                  const splitFile = rawFile.split("\n");
-                  splitFile.reverse();
-                  let match = false;
-                  for (let i = 0; i < splitFile.length; i++){
-                    const line = splitFile[i];
-                    if(!line?.match(TASK_REGEX))
-                      continue;
-                    splitFile.splice(i,0,newTask);
-                    match = true;
-                    break;
-                  }
-                  splitFile.reverse();
-                  if(!match)
-                    splitFile.push(newTask);
-
-                  // update the properties, then update the note
-                  await this.app.vault.modify(file,this.updateFileTasks(splitFile.join("\n")));
-
-                  // remove task from current note
-                  editor.replaceRange(
-                    "", 
-                    { line:cursor.line, ch: 0 },
-                    { line: cursor.line + 1, ch: 0 }
-                  );
-                  const line = Math.min(cursor.line, editor.getValue().split("\n").length);
-                  const ch = Math.min(cursor.ch, editor.getLine(line).length);
-
-                  editor.setCursor({line,ch});
-                  new Notice("Task moved");
-                });
-            });
-        }
-      )
-    );
-
+    new EditorMenuEvent(this);
     this.addSettingTab(new BasesTasksSettingTab(this.app, this));
   }
 
