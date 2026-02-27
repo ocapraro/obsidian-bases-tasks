@@ -1,7 +1,8 @@
+import { PROPERTIES_REGEX, TASK_REGEX, TYPE_DETECT_DELAY } from './constants';
 import {Editor, getAllTags, MarkdownView, Menu, Notice, parseYaml, Plugin, stringifyYaml, Vault} from 'obsidian';
 import { BasesTasksSettings, BasesTasksSettingTab, DEFAULT_SETTINGS } from 'settings/settings';
 
-const DELAY = 350;
+
 
 /**
  * The main plugin
@@ -9,7 +10,6 @@ const DELAY = 350;
 export default class BasesTasks extends Plugin {
   settings:BasesTasksSettings;
   gettingTasksTimeoutID:number;
-  taskRegex = /^- \[.\]/;
 
   async onload(): Promise<void> {
     await this.loadSettings();
@@ -24,7 +24,7 @@ export default class BasesTasks extends Plugin {
         clearTimeout(this.gettingTasksTimeoutID);
       this.gettingTasksTimeoutID = setTimeout(()=>{
         this.saveTasks(editor);
-      }, DELAY) as unknown as number;
+      }, TYPE_DETECT_DELAY) as unknown as number;
     }));
 
 
@@ -42,7 +42,7 @@ export default class BasesTasks extends Plugin {
           if(
             this.settings.dailyNoteFolderPath && // Make sure the user has enabled the move to daily note option
             this.settings.moveToDailyOption && 
-            targetLine.match(this.taskRegex) && // they are clicking on a task
+            targetLine.match(TASK_REGEX) && // they are clicking on a task
             (view?.file?.path !== dailyNotePath) // and they are not already in the daily note
           )
             menu.addItem((item) => {
@@ -70,7 +70,7 @@ export default class BasesTasks extends Plugin {
                   let match = false;
                   for (let i = 0; i < splitFile.length; i++){
                     const line = splitFile[i];
-                    if(!line?.match(this.taskRegex))
+                    if(!line?.match(TASK_REGEX))
                       continue;
                     splitFile.splice(i,0,newTask);
                     match = true;
@@ -106,12 +106,12 @@ export default class BasesTasks extends Plugin {
   // takes in the raw contents of a note, and updates the tasks property based on the content
   updateFileTasks(rawFile:string) {
     const splitFile = rawFile.split("\n");
-    const tasks = splitFile.filter(line=>line.match(this.taskRegex));
+    const tasks = splitFile.filter(line=>line.match(TASK_REGEX));
     const properties = this.getProperties(rawFile);
     if(this.strArraysEqual(properties["tasks"], tasks))
       return rawFile;
     properties["tasks"] = tasks;
-    const propertylessFile = rawFile.replace(/^---\n([\w\W]*)---\n?/m,"");
+    const propertylessFile = rawFile.replace(PROPERTIES_REGEX,"");
     const newFile = `---\n${stringifyYaml(properties)}\n---\n${propertylessFile}`;
     return newFile;
   }
@@ -137,7 +137,7 @@ export default class BasesTasks extends Plugin {
 
   // Extracts the properties from a note
   getProperties(rawFile:string):{tasks:string[], tags?:string[]} {
-    const match = rawFile.match(/^---\n([\w\W]*)---/m);
+    const match = rawFile.match(PROPERTIES_REGEX);
     const properties = match?.[1];
     const parsedProperties = parseYaml(properties||"tasks:") as {tasks:string[]};
     if(!parsedProperties["tasks"])
