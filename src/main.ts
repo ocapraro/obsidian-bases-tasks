@@ -1,7 +1,11 @@
-import {Editor, getAllTags, MarkdownView, Menu, Notice, parseYaml, Plugin, stringifyYaml, Vault} from 'obsidian';
+import EditorMenuEvent from './events/EditorMenuEvent';
+import { PROPERTIES_REGEX, TASK_REGEX, TYPE_DETECT_DELAY } from './constants';
+import {Editor, getAllTags, MarkdownView, Notice, parseYaml, Plugin, stringifyYaml, Vault} from 'obsidian';
 import { BasesTasksSettings, BasesTasksSettingTab, DEFAULT_SETTINGS } from 'settings/settings';
+import { strArraysEqual } from 'utils';
+import { moveTaskToDailyNote } from 'commands';
 
-const DELAY = 350;
+
 
 /**
  * The main plugin
@@ -9,7 +13,6 @@ const DELAY = 350;
 export default class BasesTasks extends Plugin {
   settings:BasesTasksSettings;
   gettingTasksTimeoutID:number;
-  taskRegex = /^- \[.\]/;
 
   async onload(): Promise<void> {
     await this.loadSettings();
@@ -24,94 +27,39 @@ export default class BasesTasks extends Plugin {
         clearTimeout(this.gettingTasksTimeoutID);
       this.gettingTasksTimeoutID = setTimeout(()=>{
         this.saveTasks(editor);
-      }, DELAY) as unknown as number;
+      }, TYPE_DETECT_DELAY) as unknown as number;
     }));
 
+    new EditorMenuEvent(this);
 
-    // Add editor menu items
-    this.registerEvent(
-      this.app.workspace.on(
-        "editor-menu",
-        (menu: Menu, editor: Editor) => {
-          const cursor = editor.getCursor();
-          const targetLine = editor.getLine(cursor.line);
-          const dailyNotePath = `${this.settings.dailyNoteFolderPath}/${new Date().toLocaleDateString("en-CA")}.md`;
-          const view = this.app.workspace.getActiveViewOfType(MarkdownView);
-          const properties = this.getProperties(editor.getValue());
-          
-          if(
-            this.settings.dailyNoteFolderPath && // Make sure the user has enabled the move to daily note option
-            this.settings.moveToDailyOption && 
-            targetLine.match(this.taskRegex) && // they are clicking on a task
-            (view?.file?.path !== dailyNotePath) // and they are not already in the daily note
-          )
-            menu.addItem((item) => {
-              // move to daily note menu option
-              item
-                .setTitle("Move to daily note")
-                .setIcon("calendar")
-                .onClick(async () => {
-                  // Find the daily note
-                  const file = this.app.vault.getFileByPath(dailyNotePath);
-                  if(!file){
-                    new Notice("No daily note found");
-                    return;
-                  }
-                  let newTask = targetLine;
-                  let filteredTags = properties.tags?.filter(t=>!newTask.match(new RegExp(`#${t}\\b`)))||[];
-                  if(this.settings.taskTagsToIgnore)
-                    filteredTags = filteredTags.filter(t=>!this.settings.taskTagsToIgnore.split(",").includes("#"+t));
-                  if(this.settings.moveToDailyWithTags && filteredTags.length)
-                    newTask += " #" + filteredTags.join(" #");
-                  // splice in the targeted task after the last task in the daily note or at the end
-                  const rawFile = await this.app.vault.read(file);
-                  const splitFile = rawFile.split("\n");
-                  splitFile.reverse();
-                  let match = false;
-                  for (let i = 0; i < splitFile.length; i++){
-                    const line = splitFile[i];
-                    if(!line?.match(this.taskRegex))
-                      continue;
-                    splitFile.splice(i,0,newTask);
-                    match = true;
-                    break;
-                  }
-                  splitFile.reverse();
-                  if(!match)
-                    splitFile.push(newTask);
-
-                  // update the properties, then update the note
-                  await this.app.vault.modify(file,this.updateFileTasks(splitFile.join("\n")));
-
-                  // remove task from current note
-                  editor.replaceRange(
-                    "", 
-                    { line:cursor.line, ch: 0 },
-                    { line: cursor.line + 1, ch: 0 }
-                  );
-                  const line = Math.min(cursor.line, editor.getValue().split("\n").length);
-                  const ch = Math.min(cursor.ch, editor.getLine(line).length);
-
-                  editor.setCursor({line,ch});
-                  new Notice("Task moved");
-                });
-            });
+    this.addCommand({
+      id:"move-task-to-daily-note",
+      name:"Move task to daily note",
+      callback:async()=>{
+        const editor = this.app.workspace.activeEditor?.editor;
+        if (!editor) {
+          new Notice("No active editor");
+          return;
         }
-      )
-    );
-
+        const cursor = editor.getCursor();
+        const targetLine = editor.getLine(cursor.line);
+        const dailyNotePath = `${this.settings.dailyNoteFolderPath}/${new Date().toLocaleDateString("en-CA")}.md`;
+        const properties = this.getProperties(editor.getValue());
+        await moveTaskToDailyNote(this, dailyNotePath, targetLine, properties, editor, cursor)
+      }
+    })
     this.addSettingTab(new BasesTasksSettingTab(this.app, this));
   }
 
   // takes in the raw contents of a note, and updates the tasks property based on the content
   updateFileTasks(rawFile:string) {
     const splitFile = rawFile.split("\n");
-    const tasks = splitFile.filter(line=>line.match(this.taskRegex));
+    const tasks = splitFile.filter(line=>line.match(TASK_REGEX));
     const properties = this.getProperties(rawFile);
-    if(this.strArraysEqual(properties["tasks"], tasks))
+    if(strArraysEqual(properties["tasks"], tasks))
       return rawFile;
     properties["tasks"] = tasks;
-    const propertylessFile = rawFile.replace(/^---\n([\w\W]*)---\n?/m,"");
+    const propertylessFile = rawFile.replace(PROPERTIES_REGEX,"");
     const newFile = `---\n${stringifyYaml(properties)}\n---\n${propertylessFile}`;
     return newFile;
   }
@@ -137,19 +85,12 @@ export default class BasesTasks extends Plugin {
 
   // Extracts the properties from a note
   getProperties(rawFile:string):{tasks:string[], tags?:string[]} {
-    const match = rawFile.match(/^---\n([\w\W]*)---/m);
+    const match = rawFile.match(PROPERTIES_REGEX);
     const properties = match?.[1];
     const parsedProperties = parseYaml(properties||"tasks:") as {tasks:string[]};
     if(!parsedProperties["tasks"])
       return {...parsedProperties, tasks:[]};
     return parsedProperties;
-  }
-
-  // Compares to arrays to see if each element is equal
-  strArraysEqual(arr1:string[], arr2:string[]):boolean {
-    if(arr1.length !== arr2.length)
-      return false;
-    return arr1.every((v, i) => v === arr2[i]);
   }
 
   // Go to each file and add it 
