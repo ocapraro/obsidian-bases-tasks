@@ -1,4 +1,4 @@
-import {Editor, MarkdownView, Menu, Notice, parseYaml, Plugin, stringifyYaml, Vault} from 'obsidian';
+import {Editor, getAllTags, MarkdownView, Menu, Notice, parseYaml, Plugin, stringifyYaml, Vault} from 'obsidian';
 import { BasesTasksSettings, BasesTasksSettingTab, DEFAULT_SETTINGS } from 'settings/settings';
 
 const DELAY = 350;
@@ -175,6 +175,23 @@ export default class BasesTasks extends Plugin {
   async loadSettings() {
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData() as Partial<BasesTasksSettings>);
 	}
+
+  // Gets all the tags from the vault
+  getAllVaultTags(): Set<string> {
+    const tags = new Set<string>();
+
+    for (const file of this.app.vault.getMarkdownFiles()) {
+      const cache = this.app.metadataCache.getFileCache(file);
+      if (!cache) continue;
+
+      const fileTags = getAllTags(cache);
+      if (!fileTags) continue;
+
+      for (const t of fileTags) tags.add(t);
+    }
+
+    return tags;
+  }
 
   async saveSettings() {
     await this.saveData(this.settings);

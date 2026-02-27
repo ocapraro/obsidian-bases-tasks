@@ -2,18 +2,21 @@ import BasesTasks from "main";
 import { PluginSettingTab, Setting } from "obsidian";
 import FolderSuggest from "./FolderSuggest";
 import BasesTaskSetting from "./BasesTaskSetting";
+import TagMultiSelect from "./TagMultiSelect";
 
 export interface BasesTasksSettings {
   dailyNoteFolderPath:string;
   moveToDailyOption:boolean;
   moveToDailyWithTags:boolean;
+  taskTagsToIgnore:string;
 }
 
 
 export const DEFAULT_SETTINGS: BasesTasksSettings = {
   dailyNoteFolderPath:"",
   moveToDailyOption:false,
-  moveToDailyWithTags:false
+  moveToDailyWithTags:false,
+  taskTagsToIgnore:""
 }
 
 
@@ -74,19 +77,44 @@ export class BasesTasksSettingTab extends PluginSettingTab {
       })
     );
 
-    moveToDailyOption.addToDependencies(
-      new BasesTaskSetting(containerEl)
-      .setName("Keep note tags when moving to daily")
-      .setDesc("When moving tasks to daily note, add the tags on the note it came from")
-      .addToggle(t=>t
-        .setValue(this.plugin.settings.moveToDailyWithTags)
-        .onChange(async (value)=> {
-          this.plugin.settings.moveToDailyWithTags = value;
-          await this.plugin.saveSettings();
-        })
-      )
+    const moveToDailyWithTags = new BasesTaskSetting(containerEl)
+    .setName("Keep note tags when moving to daily")
+    .setDesc("When moving tasks to daily note, add the tags on the note it came from")
+    .addToggle(t=>t
+      .setValue(this.plugin.settings.moveToDailyWithTags)
+      .onChange(async (value)=> {
+        this.plugin.settings.moveToDailyWithTags = value;
+        await this.plugin.saveSettings();
+        moveToDailyWithTags.showDependencies(this.plugin.settings.moveToDailyWithTags);
+        moveToDailyWithTags.hideDependencies(!this.plugin.settings.moveToDailyWithTags);
+      })
     );
 
+    moveToDailyWithTags.addToDependencies(
+      new BasesTaskSetting(containerEl)
+      .setName("Ignored tags")
+      .setDesc("A comma separated list of tags to be ignored when moving tasks")
+      .addSearch(search => {search
+        .setValue(this.plugin.settings.taskTagsToIgnore)
+        .setPlaceholder("Add Tags")
+        .onChange(async (value)=>{
+          const queryTags = value.split(",");
+          if(queryTags.length>=this.plugin.settings.taskTagsToIgnore.split(",").length)
+            return;
+          const tags = this.plugin.getAllVaultTags();
+          this.plugin.settings.taskTagsToIgnore = queryTags.filter(t=>tags.has(t)).join(",");
+          await this.plugin.saveSettings();
+        });
+        const tags = this.plugin.getAllVaultTags();
+        new TagMultiSelect(this.app, search.inputEl, [...tags])
+        .onSelect(async (tagList) => {
+          this.plugin.settings.taskTagsToIgnore = tagList;
+          await this.plugin.saveSettings();
+        });
+      })
+    );
+
+    moveToDailyOption.addToDependencies(moveToDailyWithTags);
     dailyNoteFolderPath.addToDependencies(moveToDailyOption);
 
     dailyNoteFolderPath.disableDependencies(!this.plugin.settings.dailyNoteFolderPath);

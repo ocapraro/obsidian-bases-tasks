@@ -4,7 +4,7 @@ import { AbstractInputSuggest, App } from "obsidian";
  * A input suggestor to select multiple tags
  */
 export default class TagMultiSelect extends AbstractInputSuggest<string> {
-  private onSelectCallback?: (tag: string, evt: MouseEvent | KeyboardEvent) => void | Promise<void>;
+  private onSelectCallback?: (tagList: string, evt: MouseEvent | KeyboardEvent) => void | Promise<void>;
   private tags:string[];
 
   constructor(app:App, textInputEl: HTMLInputElement | HTMLDivElement, tags?:string[]) {
@@ -12,7 +12,7 @@ export default class TagMultiSelect extends AbstractInputSuggest<string> {
     this.tags = tags||[];
   }
 
-  onSelect(callback: (tag: string, evt: MouseEvent | KeyboardEvent) => any): this {
+  onSelect(callback: (tagList: string, evt: MouseEvent | KeyboardEvent) => any): this {
     this.onSelectCallback = callback;
     return this;
   }
@@ -28,9 +28,14 @@ export default class TagMultiSelect extends AbstractInputSuggest<string> {
   }
 
   selectSuggestion(tag: string, evt: MouseEvent | KeyboardEvent): void {
-    this.setValue(this.getValue()+","+tag);
-    this.onSelectCallback?.(tag,evt);
+    const tagList = this.getValue().replace(new RegExp(`${tag.split("").map(c=>escapeRegExp(c)).join("?")}?$`,"i"),tag);
+    this.setValue(tagList);
+    this.onSelectCallback?.(tagList,evt);
     this.close();
   }
 
+}
+
+function escapeRegExp(str:string) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); 
 }
