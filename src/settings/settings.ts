@@ -119,6 +119,7 @@ export class BasesTasksSettingTab extends PluginSettingTab {
 
     dailyNoteFolderPath.disableDependencies(!this.plugin.settings.dailyNoteFolderPath);
     moveToDailyOption.hideDependencies(!this.plugin.settings.moveToDailyOption);
+    moveToDailyWithTags.hideDependencies(!this.plugin.settings.moveToDailyWithTags);
     
   }
 
