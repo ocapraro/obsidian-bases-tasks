@@ -1,16 +1,24 @@
-import { TASK_REGEX } from "./constants";
+import { PROPERTIES_REGEX, TASK_REGEX } from "./constants";
 import BasesTasks from "main";
-import { Editor, EditorPosition, Notice } from "obsidian";
+import { Editor, Notice, parseYaml } from "obsidian";
 import Properties from "Properties";
 
+/**
+ * 
+ * @param plugin the main plugin
+ * @param dailyNotePath the path to todays daily note
+ * @param targetTask the raw text of the task to move
+ * @param editor the editor of the current note
+ */
 export async function moveTaskToDailyNote(
   plugin:BasesTasks, 
   dailyNotePath:string,
   targetTask:string,
-  properties:Properties,
   editor:Editor,
-  cursor:EditorPosition
 ) {
+  const cursor = editor.getCursor();
+  const taskNote = editor.getValue();
+  const properties = getProperties(taskNote);
   // Find the daily note
   const file = plugin.app.vault.getFileByPath(dailyNotePath);
   if(!file){
@@ -54,4 +62,18 @@ export async function moveTaskToDailyNote(
 
   editor.setCursor({line,ch});
   new Notice("Task moved");
+}
+
+/**
+ * Get the properties from a note
+ * @param rawFile The raw text of the note to get the properties from
+ * @returns the note properties
+ */
+export function getProperties(rawFile:string):Properties {
+  const match = rawFile.match(PROPERTIES_REGEX);
+  const properties = match?.[1];
+  const parsedProperties = parseYaml(properties||"tasks:") as {tasks:string[]};
+  if(!parsedProperties["tasks"])
+    return {...parsedProperties, tasks:[]};
+  return parsedProperties;
 }

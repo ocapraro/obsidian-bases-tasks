@@ -1,8 +1,7 @@
 import { moveTaskToDailyNote } from "commands";
 import { TASK_REGEX } from "../constants";
 import BasesTasks from "main";
-import { Menu, Editor, MarkdownView, EditorPosition } from "obsidian";
-import Properties from "Properties";
+import { Menu, Editor, MarkdownView } from "obsidian";
 
 /**
  * Register an editor-menu event
@@ -26,8 +25,7 @@ export default class EditorMenuEvent {
           const targetLine = editor.getLine(cursor.line);
           const dailyNotePath = `${this.plugin.settings.dailyNoteFolderPath}/${new Date().toLocaleDateString("en-CA")}.md`;
           const view = this.plugin.app.workspace.getActiveViewOfType(MarkdownView);
-          const properties = this.plugin.getProperties(editor.getValue());
-          this.addMoveToDailyNote(menu,editor,cursor,targetLine,dailyNotePath,properties,view||undefined);
+          this.addMoveToDailyNote(menu,editor,targetLine,dailyNotePath,view||undefined);
           
         }
       )
@@ -37,10 +35,8 @@ export default class EditorMenuEvent {
   addMoveToDailyNote(
     menu:Menu, 
     editor:Editor,
-    cursor:EditorPosition,
     targetLine:string, 
-    dailyNotePath:string, 
-    properties:Properties,
+    dailyNotePath:string,
     view?: MarkdownView
   ) {
     if(
@@ -55,7 +51,7 @@ export default class EditorMenuEvent {
           .setTitle("Move to daily note")
           .setIcon("calendar")
           .onClick(async () => {
-            await moveTaskToDailyNote(this.plugin, dailyNotePath, targetLine, properties, editor, cursor);
+            await moveTaskToDailyNote(this.plugin, dailyNotePath, targetLine, editor);
           });
       });
   }

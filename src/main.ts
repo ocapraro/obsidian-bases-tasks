@@ -1,9 +1,9 @@
 import EditorMenuEvent from './events/EditorMenuEvent';
 import { PROPERTIES_REGEX, TASK_REGEX, TYPE_DETECT_DELAY } from './constants';
-import {Editor, getAllTags, MarkdownView, Notice, parseYaml, Plugin, stringifyYaml, Vault} from 'obsidian';
+import {Editor, getAllTags, MarkdownView, Notice, Plugin, stringifyYaml, Vault} from 'obsidian';
 import { BasesTasksSettings, BasesTasksSettingTab, DEFAULT_SETTINGS } from 'settings/settings';
 import { strArraysEqual } from 'utils';
-import { moveTaskToDailyNote } from 'commands';
+import { getProperties, moveTaskToDailyNote } from 'commands';
 
 
 
@@ -44,10 +44,9 @@ export default class BasesTasks extends Plugin {
         const cursor = editor.getCursor();
         const targetLine = editor.getLine(cursor.line);
         const dailyNotePath = `${this.settings.dailyNoteFolderPath}/${new Date().toLocaleDateString("en-CA")}.md`;
-        const properties = this.getProperties(editor.getValue());
-        await moveTaskToDailyNote(this, dailyNotePath, targetLine, properties, editor, cursor)
+        await moveTaskToDailyNote(this, dailyNotePath, targetLine, editor)
       }
-    })
+    });
     this.addSettingTab(new BasesTasksSettingTab(this.app, this));
   }
 
@@ -55,7 +54,7 @@ export default class BasesTasks extends Plugin {
   updateFileTasks(rawFile:string) {
     const splitFile = rawFile.split("\n");
     const tasks = splitFile.filter(line=>line.match(TASK_REGEX));
-    const properties = this.getProperties(rawFile);
+    const properties = getProperties(rawFile);
     if(strArraysEqual(properties["tasks"], tasks))
       return rawFile;
     properties["tasks"] = tasks;
@@ -81,16 +80,6 @@ export default class BasesTasks extends Plugin {
     // Update file, and set cursor to proper location
     editor.setValue(newFile);
     editor.setCursor(cursorPosition);
-  }
-
-  // Extracts the properties from a note
-  getProperties(rawFile:string):{tasks:string[], tags?:string[]} {
-    const match = rawFile.match(PROPERTIES_REGEX);
-    const properties = match?.[1];
-    const parsedProperties = parseYaml(properties||"tasks:") as {tasks:string[]};
-    if(!parsedProperties["tasks"])
-      return {...parsedProperties, tasks:[]};
-    return parsedProperties;
   }
 
   // Go to each file and add it 
