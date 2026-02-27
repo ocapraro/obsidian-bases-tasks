@@ -96,7 +96,7 @@ export class BasesTasksSettingTab extends PluginSettingTab {
       .setDesc("A comma separated list of tags to be ignored when moving tasks")
       .addSearch(search => {search
         .setValue(this.plugin.settings.taskTagsToIgnore)
-        .setPlaceholder("Add Tags")
+        .setPlaceholder("Add tags")
         .onChange(async (value)=>{
           const queryTags = value.split(",");
           if(queryTags.length>=this.plugin.settings.taskTagsToIgnore.split(",").length)

@@ -12,7 +12,7 @@ export default class TagMultiSelect extends AbstractInputSuggest<string> {
     this.tags = tags||[];
   }
 
-  onSelect(callback: (tagList: string, evt: MouseEvent | KeyboardEvent) => any): this {
+  onSelect(callback: (tagList: string, evt: MouseEvent | KeyboardEvent) => void | Promise<void>): this {
     this.onSelectCallback = callback;
     return this;
   }
@@ -30,7 +30,7 @@ export default class TagMultiSelect extends AbstractInputSuggest<string> {
   selectSuggestion(tag: string, evt: MouseEvent | KeyboardEvent): void {
     const tagList = this.getValue().replace(new RegExp(`${tag.split("").map(c=>escapeRegExp(c)).join("?")}?$`,"i"),tag);
     this.setValue(tagList);
-    this.onSelectCallback?.(tagList,evt);
+    void this.onSelectCallback?.(tagList,evt);
     this.close();
   }
 
