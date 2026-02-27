@@ -1,6 +1,6 @@
 import { PROPERTIES_REGEX, TASK_REGEX } from "./constants";
 import BasesTasks from "main";
-import { Editor, Notice, parseYaml, stringifyYaml, Vault } from "obsidian";
+import { App, Editor, getAllTags, Notice, parseYaml, stringifyYaml, Vault } from "obsidian";
 import Properties from "Properties";
 import { strArraysEqual } from "utils";
 
@@ -143,4 +143,20 @@ export async function syncTasks(vault:Vault) {
   }
   notif.hide();
   new Notice("Syncing complete!", 3000);
+}
+
+export function getAllVaultTags(app:App): Set<string> {
+  const tags = new Set<string>();
+  
+  for (const file of app.vault.getMarkdownFiles()) {
+    const cache = app.metadataCache.getFileCache(file);
+    if (!cache) 
+      continue;
+    const fileTags = getAllTags(cache);
+    if (!fileTags) 
+      continue;
+    for (const t of fileTags) 
+      tags.add(t);
+  }
+  return tags;
 }

@@ -1,6 +1,6 @@
 import EditorMenuEvent from './events/EditorMenuEvent';
 import { TYPE_DETECT_DELAY } from './constants';
-import {getAllTags, MarkdownView, Notice, Plugin} from 'obsidian';
+import { MarkdownView, Notice, Plugin} from 'obsidian';
 import { BasesTasksSettings, BasesTasksSettingTab, DEFAULT_SETTINGS } from 'settings/settings';
 import { moveTaskToDailyNote, saveTasks } from 'commands';
 
@@ -47,25 +47,6 @@ export default class BasesTasks extends Plugin {
       }
     });
     this.addSettingTab(new BasesTasksSettingTab(this.app, this));
-  }
-
-  
-
-  // Gets all the tags from the vault
-  getAllVaultTags(): Set<string> {
-    const tags = new Set<string>();
-    
-    for (const file of this.app.vault.getMarkdownFiles()) {
-      const cache = this.app.metadataCache.getFileCache(file);
-      if (!cache) 
-        continue;
-      const fileTags = getAllTags(cache);
-      if (!fileTags) 
-        continue;
-      for (const t of fileTags) 
-        tags.add(t);
-    }
-    return tags;
   }
 
   async loadSettings() {

@@ -3,7 +3,7 @@ import { PluginSettingTab, Setting } from "obsidian";
 import FolderSuggest from "./search/FolderSuggest";
 import BasesTaskSetting from "./BasesTaskSetting";
 import TagMultiSelect from "./search/TagMultiSelect";
-import { syncTasks } from "commands";
+import { getAllVaultTags, syncTasks } from "commands";
 
 export interface BasesTasksSettings {
   dailyNoteFolderPath:string;
@@ -95,18 +95,18 @@ export class BasesTasksSettingTab extends PluginSettingTab {
       new BasesTaskSetting(containerEl)
       .setName("Ignored tags")
       .setDesc("A comma separated list of tags to be ignored when moving tasks")
-      .addSearch(search => {search
+      .addSearch(search => {
+        const tags = getAllVaultTags(this.app);
+        search
         .setValue(this.plugin.settings.taskTagsToIgnore)
         .setPlaceholder("Add tags")
         .onChange(async (value)=>{
           const queryTags = value.split(",");
           if(queryTags.length>=this.plugin.settings.taskTagsToIgnore.split(",").length)
             return;
-          const tags = this.plugin.getAllVaultTags();
           this.plugin.settings.taskTagsToIgnore = queryTags.filter(t=>tags.has(t)).join(",");
           await this.plugin.saveSettings();
         });
-        const tags = this.plugin.getAllVaultTags();
         new TagMultiSelect(this.app, search.inputEl, [...tags])
         .onSelect(async (tagList) => {
           this.plugin.settings.taskTagsToIgnore = tagList;
