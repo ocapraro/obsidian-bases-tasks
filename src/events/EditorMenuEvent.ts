@@ -1,7 +1,7 @@
 import { moveTaskToDailyNote } from "commands";
 import { TASK_REGEX } from "../constants";
 import BasesTasks from "main";
-import { Menu, Editor, MarkdownView, Notice, EditorPosition } from "obsidian";
+import { Menu, Editor, MarkdownView, EditorPosition } from "obsidian";
 import Properties from "Properties";
 
 /**

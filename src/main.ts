@@ -35,7 +35,7 @@ export default class BasesTasks extends Plugin {
     this.addCommand({
       id:"move-task-to-daily-note",
       name:"Move task to daily note",
-      callback:()=>{
+      callback:async()=>{
         const editor = this.app.workspace.activeEditor?.editor;
         if (!editor) {
           new Notice("No active editor");
@@ -45,7 +45,7 @@ export default class BasesTasks extends Plugin {
         const targetLine = editor.getLine(cursor.line);
         const dailyNotePath = `${this.settings.dailyNoteFolderPath}/${new Date().toLocaleDateString("en-CA")}.md`;
         const properties = this.getProperties(editor.getValue());
-        moveTaskToDailyNote(this, dailyNotePath, targetLine, properties, editor, cursor)
+        await moveTaskToDailyNote(this, dailyNotePath, targetLine, properties, editor, cursor)
       }
     })
     this.addSettingTab(new BasesTasksSettingTab(this.app, this));
