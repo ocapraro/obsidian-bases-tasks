@@ -1,4 +1,4 @@
-import {Editor, MarkdownView, Menu, Notice, parseYaml, Plugin, stringifyYaml, Vault} from 'obsidian';
+import {Editor, getAllTags, MarkdownView, Menu, Notice, parseYaml, Plugin, stringifyYaml, Vault} from 'obsidian';
 import { BasesTasksSettings, BasesTasksSettingTab, DEFAULT_SETTINGS } from 'settings/settings';
 
 const DELAY = 350;
@@ -37,6 +37,7 @@ export default class BasesTasks extends Plugin {
           const targetLine = editor.getLine(cursor.line);
           const dailyNotePath = `${this.settings.dailyNoteFolderPath}/${new Date().toLocaleDateString("en-CA")}.md`;
           const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+          const properties = this.getProperties(editor.getValue());
           
           if(
             this.settings.dailyNoteFolderPath && // Make sure the user has enabled the move to daily note option
@@ -53,10 +54,15 @@ export default class BasesTasks extends Plugin {
                   // Find the daily note
                   const file = this.app.vault.getFileByPath(dailyNotePath);
                   if(!file){
-                    new Notice("No daily note found")
+                    new Notice("No daily note found");
                     return;
                   }
-
+                  let newTask = targetLine;
+                  let filteredTags = properties.tags?.filter(t=>!newTask.match(new RegExp(`#${t}\\b`)))||[];
+                  if(this.settings.taskTagsToIgnore)
+                    filteredTags = filteredTags.filter(t=>!this.settings.taskTagsToIgnore.split(",").includes("#"+t));
+                  if(this.settings.moveToDailyWithTags && filteredTags.length)
+                    newTask += " #" + filteredTags.join(" #");
                   // splice in the targeted task after the last task in the daily note or at the end
                   const rawFile = await this.app.vault.read(file);
                   const splitFile = rawFile.split("\n");
@@ -66,13 +72,13 @@ export default class BasesTasks extends Plugin {
                     const line = splitFile[i];
                     if(!line?.match(this.taskRegex))
                       continue;
-                    splitFile.splice(i,0,targetLine);
+                    splitFile.splice(i,0,newTask);
                     match = true;
                     break;
                   }
                   splitFile.reverse();
                   if(!match)
-                    splitFile.push(targetLine);
+                    splitFile.push(newTask);
 
                   // update the properties, then update the note
                   await this.app.vault.modify(file,this.updateFileTasks(splitFile.join("\n")));
@@ -83,7 +89,10 @@ export default class BasesTasks extends Plugin {
                     { line:cursor.line, ch: 0 },
                     { line: cursor.line + 1, ch: 0 }
                   );
-                  editor.setCursor({...editor.getCursor(), ch:cursor.ch});
+                  const line = Math.min(cursor.line, editor.getValue().split("\n").length);
+                  const ch = Math.min(cursor.ch, editor.getLine(line).length);
+
+                  editor.setCursor({line,ch});
                   new Notice("Task moved");
                 });
             });
@@ -127,7 +136,7 @@ export default class BasesTasks extends Plugin {
   }
 
   // Extracts the properties from a note
-  getProperties(rawFile:string):{tasks:string[]} {
+  getProperties(rawFile:string):{tasks:string[], tags?:string[]} {
     const match = rawFile.match(/^---\n([\w\W]*)---/m);
     const properties = match?.[1];
     const parsedProperties = parseYaml(properties||"tasks:") as {tasks:string[]};
@@ -163,6 +172,23 @@ export default class BasesTasks extends Plugin {
     }
     notif.hide();
     new Notice("Syncing complete!", 3000);
+  }
+
+  // Gets all the tags from the vault
+  getAllVaultTags(): Set<string> {
+    const tags = new Set<string>();
+    
+    for (const file of this.app.vault.getMarkdownFiles()) {
+      const cache = this.app.metadataCache.getFileCache(file);
+      if (!cache) 
+        continue;
+      const fileTags = getAllTags(cache);
+      if (!fileTags) 
+        continue;
+      for (const t of fileTags) 
+        tags.add(t);
+    }
+    return tags;
   }
 
   async loadSettings() {
