@@ -1,6 +1,7 @@
 import { PROPERTIES_REGEX, TASK_REGEX, TYPE_DETECT_DELAY } from './constants';
 import {Editor, getAllTags, MarkdownView, Menu, Notice, parseYaml, Plugin, stringifyYaml, Vault} from 'obsidian';
 import { BasesTasksSettings, BasesTasksSettingTab, DEFAULT_SETTINGS } from 'settings/settings';
+import { strArraysEqual } from 'utils';
 
 
 
@@ -108,7 +109,7 @@ export default class BasesTasks extends Plugin {
     const splitFile = rawFile.split("\n");
     const tasks = splitFile.filter(line=>line.match(TASK_REGEX));
     const properties = this.getProperties(rawFile);
-    if(this.strArraysEqual(properties["tasks"], tasks))
+    if(strArraysEqual(properties["tasks"], tasks))
       return rawFile;
     properties["tasks"] = tasks;
     const propertylessFile = rawFile.replace(PROPERTIES_REGEX,"");
@@ -143,13 +144,6 @@ export default class BasesTasks extends Plugin {
     if(!parsedProperties["tasks"])
       return {...parsedProperties, tasks:[]};
     return parsedProperties;
-  }
-
-  // Compares to arrays to see if each element is equal
-  strArraysEqual(arr1:string[], arr2:string[]):boolean {
-    if(arr1.length !== arr2.length)
-      return false;
-    return arr1.every((v, i) => v === arr2[i]);
   }
 
   // Go to each file and add it 
