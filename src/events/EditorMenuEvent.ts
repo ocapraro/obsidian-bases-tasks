@@ -1,4 +1,4 @@
-import { moveTaskToDailyNote } from "commands";
+import { moveTaskToNote } from "commands";
 import { TASK_REGEX } from "../constants";
 import BasesTasks from "main";
 import { Menu, Editor, MarkdownView } from "obsidian";
@@ -24,8 +24,12 @@ export default class EditorMenuEvent {
           const cursor = editor.getCursor();
           const targetLine = editor.getLine(cursor.line);
           const dailyNotePath = `${this.plugin.settings.dailyNoteFolderPath}/${new Date().toLocaleDateString("en-CA")}.md`;
+          const nextDate = new Date();
+          nextDate.setDate(nextDate.getDate() + 1);
+          const nextDayNotePath = `${this.plugin.settings.dailyNoteFolderPath}/${nextDate.toLocaleDateString("en-CA")}.md`;
           const view = this.plugin.app.workspace.getActiveViewOfType(MarkdownView);
           this.addMoveToDailyNote(menu,editor,targetLine,dailyNotePath,view||undefined);
+          this.addPushBackADay(menu,editor,targetLine,nextDayNotePath,this.plugin.settings.dailyNoteFolderPath,view||undefined);
           
         }
       )
@@ -51,7 +55,32 @@ export default class EditorMenuEvent {
           .setTitle("Move to daily note")
           .setIcon("calendar")
           .onClick(async () => {
-            await moveTaskToDailyNote(this.plugin, dailyNotePath, targetLine, editor);
+            await moveTaskToNote(this.plugin, dailyNotePath, targetLine, editor);
+          });
+      });
+  }
+
+  addPushBackADay(
+    menu:Menu, 
+    editor:Editor,
+    targetLine:string, 
+    nextDayNotePath:string,
+    dailyNoteFolderPath:string,
+    view?: MarkdownView
+  ) {
+    if(
+      this.plugin.settings.dailyNoteFolderPath && // Make sure the user has enabled the move to daily note option
+      this.plugin.settings.moveToDailyOption && 
+      targetLine.match(TASK_REGEX) && // they are clicking on a task
+      (view?.file?.path.startsWith(dailyNoteFolderPath)) // they are in a dailynote
+    )
+      menu.addItem((item) => {
+        // move to daily note menu option
+        item
+          .setTitle("Move to next day")
+          .setIcon("calendar")
+          .onClick(async () => {
+            await moveTaskToNote(this.plugin, nextDayNotePath, targetLine, editor);
           });
       });
   }

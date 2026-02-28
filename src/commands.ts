@@ -7,13 +7,13 @@ import { strArraysEqual } from "utils";
 /**
  * 
  * @param plugin the main plugin
- * @param dailyNotePath the path to todays daily note
+ * @param notePath the path to the note you want to move the task to
  * @param targetTask the raw text of the task to move
  * @param editor the editor of the current note
  */
-export async function moveTaskToDailyNote(
+export async function moveTaskToNote(
   plugin:BasesTasks, 
-  dailyNotePath:string,
+  notePath:string,
   targetTask:string,
   editor:Editor,
 ) {
@@ -21,9 +21,9 @@ export async function moveTaskToDailyNote(
   const taskNote = editor.getValue();
   const properties = getProperties(taskNote);
   // Find the daily note
-  const file = plugin.app.vault.getFileByPath(dailyNotePath);
+  const file = plugin.app.vault.getFileByPath(notePath);
   if(!file){
-    new Notice("No daily note found");
+    new Notice(notePath+" not found");
     return;
   }
   let newTask = targetTask;

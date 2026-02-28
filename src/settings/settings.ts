@@ -7,6 +7,7 @@ import { getAllVaultTags, syncTasks } from "commands";
 
 export interface BasesTasksSettings {
   dailyNoteFolderPath:string;
+  moveToTomorrowOption:boolean;
   moveToDailyOption:boolean;
   moveToDailyWithTags:boolean;
   taskTagsToIgnore:string;
@@ -15,6 +16,7 @@ export interface BasesTasksSettings {
 
 export const DEFAULT_SETTINGS: BasesTasksSettings = {
   dailyNoteFolderPath:"",
+  moveToTomorrowOption:false,
   moveToDailyOption:false,
   moveToDailyWithTags:false,
   taskTagsToIgnore:""
@@ -64,6 +66,19 @@ export class BasesTasksSettingTab extends PluginSettingTab {
         dailyNoteFolderPath.enableDependencies();
       });
     });
+
+    dailyNoteFolderPath.addToDependencies(
+      new BasesTaskSetting(containerEl)
+      .setName("Move to tomorrow option")
+      .setDesc("Enables the menu option to move tasks to tomorrows daily note")
+      .addToggle(t=>t
+        .setValue(this.plugin.settings.moveToTomorrowOption)
+        .onChange(async (value)=> {
+          this.plugin.settings.moveToTomorrowOption = value;
+          await this.plugin.saveSettings();
+        })
+      )
+    );
 
     const moveToDailyOption = new BasesTaskSetting(containerEl)
     .setName("Move to daily note option")
