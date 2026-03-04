@@ -17,6 +17,7 @@ export async function moveTaskToNote(
   targetTask:string,
   editor:Editor,
 ) {
+  plugin.logger?.log(`Moving ${targetTask} to ${notePath}`);
   const cursor = editor.getCursor();
   const taskNote = editor.getValue();
   const properties = getProperties(taskNote);
@@ -24,6 +25,7 @@ export async function moveTaskToNote(
   const file = plugin.app.vault.getFileByPath(notePath);
   if(!file){
     new Notice(notePath+" not found");
+    plugin.logger?.log(notePath+" not found");
     return;
   }
   let newTask = targetTask;
