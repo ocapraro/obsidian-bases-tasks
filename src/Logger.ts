@@ -19,7 +19,9 @@ export class Logger {
     
     if (await adapter.exists(path)) {
       const old = await adapter.read(path);
-      await adapter.write(path, old + line);
+      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      const filteredOld = old.split("\n").filter(l=>l.length<1||(new Date(l.slice(1,l.indexOf("]"))) > oneDayAgo)).join("\n");
+      await adapter.write(path, filteredOld + line);
     } else {
       await adapter.write(path, line);
     }
