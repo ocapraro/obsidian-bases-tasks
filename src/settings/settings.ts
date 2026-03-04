@@ -11,6 +11,7 @@ export interface BasesTasksSettings {
   moveToDailyOption:boolean;
   moveToDailyWithTags:boolean;
   taskTagsToIgnore:string;
+  developerSettings:boolean;
 }
 
 
@@ -19,7 +20,8 @@ export const DEFAULT_SETTINGS: BasesTasksSettings = {
   moveToTomorrowOption:false,
   moveToDailyOption:false,
   moveToDailyWithTags:false,
-  taskTagsToIgnore:""
+  taskTagsToIgnore:"",
+  developerSettings:false
 }
 
 
@@ -39,6 +41,11 @@ export class BasesTasksSettingTab extends PluginSettingTab {
       .setIcon("refresh-ccw")
       .onClick(async()=>{await syncTasks(this.plugin.app.vault)})});
 
+    this.displayDailyNoteSettings(containerEl);
+    
+  }
+
+  displayDailyNoteSettings(containerEl:HTMLElement) {
     new Setting(containerEl)
     .setName("Daily notes integration")
     .setHeading()
@@ -136,7 +143,6 @@ export class BasesTasksSettingTab extends PluginSettingTab {
     dailyNoteFolderPath.disableDependencies(!this.plugin.settings.dailyNoteFolderPath);
     moveToDailyOption.hideDependencies(!this.plugin.settings.moveToDailyOption);
     moveToDailyWithTags.hideDependencies(!this.plugin.settings.moveToDailyWithTags);
-    
   }
 
 
