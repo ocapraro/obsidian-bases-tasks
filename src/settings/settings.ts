@@ -12,6 +12,7 @@ export interface BasesTasksSettings {
   moveToDailyWithTags:boolean;
   taskTagsToIgnore:string;
   developerSettings:boolean;
+  logging:boolean;
 }
 
 
@@ -21,7 +22,8 @@ export const DEFAULT_SETTINGS: BasesTasksSettings = {
   moveToDailyOption:false,
   moveToDailyWithTags:false,
   taskTagsToIgnore:"",
-  developerSettings:false
+  developerSettings:false,
+  logging:false
 }
 
 
@@ -42,12 +44,14 @@ export class BasesTasksSettingTab extends PluginSettingTab {
       .onClick(async()=>{await syncTasks(this.plugin.app.vault)})});
 
     this.displayDailyNoteSettings(containerEl);
+    this.displayDeveloperSettings(containerEl);
     
   }
 
   displayDailyNoteSettings(containerEl:HTMLElement) {
     new Setting(containerEl)
     .setName("Daily notes integration")
+    .setDesc("Task integrations with daily notes")
     .setHeading()
 
     const dailyNoteFolderPath = new BasesTaskSetting(containerEl)
@@ -143,6 +147,40 @@ export class BasesTasksSettingTab extends PluginSettingTab {
     dailyNoteFolderPath.disableDependencies(!this.plugin.settings.dailyNoteFolderPath);
     moveToDailyOption.hideDependencies(!this.plugin.settings.moveToDailyOption);
     moveToDailyWithTags.hideDependencies(!this.plugin.settings.moveToDailyWithTags);
+  }
+
+  displayDeveloperSettings(containerEl:HTMLElement) {
+    new Setting(containerEl)
+    .setName("Developer settings")
+    .setDesc("Not needed unless you're trying to devlop this plugin.")
+    .setHeading();
+
+    const developerSettings = new BasesTaskSetting(containerEl)
+    .setName("Enable developer settings")
+    .setDesc("Enables other developer options")
+    .addToggle(t =>t
+      .setValue(this.plugin.settings.developerSettings)
+      .onChange(async (value)=> {
+        developerSettings.hideDependencies(!value);
+        developerSettings.showDependencies(value);
+        this.plugin.settings.developerSettings = value;
+        await this.plugin.saveSettings();
+      })
+    );
+
+    developerSettings.addToDependencies(new BasesTaskSetting(containerEl)
+      .setName("Logging")
+      .setDesc("Starts logging actions in the log file found within this plugin folder.")
+      .addToggle(t =>t
+        .setValue(this.plugin.settings.logging)
+        .onChange(async (value)=> {
+          this.plugin.settings.logging = value;
+          await this.plugin.saveSettings();
+        })
+      )
+    );
+
+    developerSettings.hideDependencies(!this.plugin.settings.developerSettings);
   }
 
 
