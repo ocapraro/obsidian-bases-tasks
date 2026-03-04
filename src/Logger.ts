@@ -9,20 +9,19 @@ export class Logger {
   }
 
   private async addToLog(message: string) {
+    const adapter = this.plugin.app.vault.adapter;
+
     const path = normalizePath(
       `${this.plugin.app.vault.configDir}/plugins/${this.plugin.manifest.id}/log.txt`
     );
 
     const line = `[${new Date().toISOString()}] ${message}\n`;
-    const file = this.plugin.app.vault.getAbstractFileByPath(path);
-
-
     
-    if (file instanceof TFile) {
-      const old = await this.plugin.app.vault.read(file);
-      await this.plugin.app.vault.modify(file, old + line);
+    if (await adapter.exists(path)) {
+      const old = await adapter.read(path);
+      await adapter.write(path, old + line);
     } else {
-      await this.plugin.app.vault.create(path, line);
+      await adapter.write(path, line);
     }
   }
 
