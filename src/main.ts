@@ -13,11 +13,11 @@ import { Logger } from 'Logger';
 export default class BasesTasks extends Plugin {
   settings:BasesTasksSettings;
   gettingTasksTimeoutID:number;
-  logger:Logger = new Logger(this);
+  logger:Logger|undefined;
 
   async onload(): Promise<void> {
-    this.logger.log("Loaded")
     await this.loadSettings();
+    this.logger?.log("Loaded");
 
     // Save tasks to properties on editor
     this.registerEvent(this.app.workspace.on("editor-change", async(editor, info)=>{
@@ -63,6 +63,8 @@ export default class BasesTasks extends Plugin {
 
   async loadSettings() {
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData() as Partial<BasesTasksSettings>);
+    if(this.settings.developerSettings && this.settings.logging)
+      this.logger = new Logger(this);
 	}
 
   async saveSettings() {
