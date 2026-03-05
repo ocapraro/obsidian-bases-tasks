@@ -53,7 +53,7 @@ export async function moveTaskToNote(
     splitFile.push(newTask);
 
   // update the properties, then update the note
-  await plugin.app.vault.modify(file,updateFileTasks(splitFile.join("\n")));
+  await plugin.app.vault.modify(file,updateRawFileTasks(splitFile.join("\n")));
 
   // remove task from current note
   editor.replaceRange(
@@ -83,45 +83,53 @@ export function getProperties(rawFile:string):Properties {
   return parsedProperties;
 }
 
+/**
+ * Gets the properties from a note and updates the task list based on the content
+ * @param rawFile the raw text of the note to get the properties from
+ * @returns the updated properties object based on the 
+ */
+function getUpdatedProperties(rawFile:string): Properties {
+  const splitFile = rawFile.split("\n");
+  const tasks = splitFile.filter(line=>line.match(TASK_REGEX));
+  const properties = getProperties(rawFile);
+  properties["tasks"] = tasks;
+  return properties;
+}
+
 
 /**
  * Takes in the raw contents of a note, and updates the tasks property based on the content
  * @param rawFile the raw note contents
  * @returns the updated note
  */
-export function updateFileTasks(rawFile:string) {
+export function updateRawFileTasks(rawFile:string):string {
   const splitFile = rawFile.split("\n");
   const tasks = splitFile.filter(line=>line.match(TASK_REGEX));
-  const properties = getProperties(rawFile);
+  const properties = getUpdatedProperties(rawFile);
   if(strArraysEqual(properties["tasks"], tasks))
     return rawFile;
-  properties["tasks"] = tasks;
   const propertylessFile = rawFile.replace(PROPERTIES_REGEX,"");
   const newFile = `---\n${stringifyYaml(properties)}\n---\n${propertylessFile}`;
   return newFile;
 }
 
 /**
- * Extracts the tasks from the current note body, and saves them as a property
- * @param editor the editor of the current note
- * @returns 
+ * Updates the tasks properties for the currently open file
+ * @param editor the editor of the current file
  */
-export function saveTasks(editor:Editor) {
+export function updateCurrentFileTasks(editor:Editor):void {
   const rawFile = editor.getValue();
-  const newFile = updateFileTasks(rawFile);
-
-  // If theres no change, no need to overwrite
-  if(rawFile == newFile)
-    return
-
-  // Grab line length difference between new and old file, add it to the current cursor position
-  const lineDifferential = newFile.split("\n").length - rawFile.split("\n").length;
-  const cursorPosition = editor.getCursor();
-  cursorPosition.line += lineDifferential;
-
-  // Update file, and set cursor to proper location
-  editor.setValue(newFile);
-  editor.setCursor(cursorPosition);
+  const oldProperties = getProperties(rawFile);
+  const newProperties = getUpdatedProperties(rawFile);
+  // If no new tasks, exit out
+  if(strArraysEqual(oldProperties["tasks"], newProperties["tasks"]))
+    return;
+  const endLine = (rawFile.match(PROPERTIES_REGEX)?.[0].split("\n").length||1)-1;
+  editor.replaceRange(
+    `---\n${stringifyYaml(newProperties)}\n---\n`,
+    {line:0,ch:0},
+    {line:endLine,ch:0}
+  );
 }
 
 /**
@@ -140,7 +148,7 @@ export async function syncTasks(vault:Vault, logger?:Logger) {
     if (!file)
       continue;
     const rawFile = await vault.read(file);
-    const newFile = updateFileTasks(rawFile);
+    const newFile = updateRawFileTasks(rawFile);
     if (rawFile == newFile)
       continue;
 

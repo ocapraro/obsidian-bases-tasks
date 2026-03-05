@@ -2,7 +2,7 @@ import EditorMenuEvent from './events/EditorMenuEvent';
 import { TYPE_DETECT_DELAY } from './constants';
 import { MarkdownView, Notice, Plugin} from 'obsidian';
 import { BasesTasksSettings, BasesTasksSettingTab, DEFAULT_SETTINGS } from 'settings/settings';
-import { moveTaskToNote, saveTasks, syncTasks } from 'commands';
+import { moveTaskToNote, updateCurrentFileTasks, syncTasks } from 'commands';
 import { Logger } from 'Logger';
 
 
@@ -28,7 +28,7 @@ export default class BasesTasks extends Plugin {
       if(this.gettingTasksTimeoutID !== null)
         clearTimeout(this.gettingTasksTimeoutID);
       this.gettingTasksTimeoutID = setTimeout(()=>{
-        saveTasks(editor);
+        updateCurrentFileTasks(editor);
       }, TYPE_DETECT_DELAY) as unknown as number;
     }));
 
