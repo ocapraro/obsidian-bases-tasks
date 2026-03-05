@@ -3,6 +3,7 @@ import { TYPE_DETECT_DELAY } from './constants';
 import { MarkdownView, Notice, Plugin} from 'obsidian';
 import { BasesTasksSettings, BasesTasksSettingTab, DEFAULT_SETTINGS } from 'settings/settings';
 import { moveTaskToNote, saveTasks, syncTasks } from 'commands';
+import { Logger } from 'Logger';
 
 
 
@@ -12,9 +13,11 @@ import { moveTaskToNote, saveTasks, syncTasks } from 'commands';
 export default class BasesTasks extends Plugin {
   settings:BasesTasksSettings;
   gettingTasksTimeoutID:number;
+  logger:Logger|undefined;
 
   async onload(): Promise<void> {
     await this.loadSettings();
+    this.logger?.log("Loaded");
 
     // Save tasks to properties on editor
     this.registerEvent(this.app.workspace.on("editor-change", async(editor, info)=>{
@@ -51,7 +54,7 @@ export default class BasesTasks extends Plugin {
       id:"sync-tasks",
       name:"Sync all vault tasks",
       callback:async()=>{
-        await syncTasks(this.app.vault);
+        await syncTasks(this.app.vault, this.logger);
       }
     });
 
@@ -60,6 +63,8 @@ export default class BasesTasks extends Plugin {
 
   async loadSettings() {
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData() as Partial<BasesTasksSettings>);
+    if(this.settings.developerTools && this.settings.logging)
+      this.logger = new Logger(this);
 	}
 
   async saveSettings() {

@@ -1,3 +1,4 @@
+import { Logger } from "Logger";
 import { PROPERTIES_REGEX, TASK_REGEX } from "./constants";
 import BasesTasks from "main";
 import { App, Editor, getAllTags, Notice, parseYaml, stringifyYaml, Vault } from "obsidian";
@@ -17,6 +18,7 @@ export async function moveTaskToNote(
   targetTask:string,
   editor:Editor,
 ) {
+  plugin.logger?.log(`Moving "${targetTask.slice(6)}" to "${notePath}"`);
   const cursor = editor.getCursor();
   const taskNote = editor.getValue();
   const properties = getProperties(taskNote);
@@ -24,6 +26,7 @@ export async function moveTaskToNote(
   const file = plugin.app.vault.getFileByPath(notePath);
   if(!file){
     new Notice(notePath+" not found");
+    plugin.logger?.log(`"${notePath}" not found`);
     return;
   }
   let newTask = targetTask;
@@ -63,6 +66,7 @@ export async function moveTaskToNote(
 
   editor.setCursor({line,ch});
   new Notice("Task moved");
+  plugin.logger?.log(`Moved "${targetTask.slice(6)}" to "${notePath}"`);
 }
 
 /**
@@ -124,7 +128,8 @@ export function saveTasks(editor:Editor) {
  * Go to each note in a vault, scan it for tasks, and add them as a property.
  * @param vault the vault to search through
  */
-export async function syncTasks(vault:Vault) {
+export async function syncTasks(vault:Vault, logger?:Logger) {
+  logger?.log("Syncing tasks...");
   // Alert user that synicing has started
   let notif = new Notice("Syncing tasks...");
   const allFiles = vault.getFiles().filter(f=>f.extension==="md");
@@ -143,6 +148,7 @@ export async function syncTasks(vault:Vault) {
   }
   notif.hide();
   new Notice("Syncing complete!", 3000);
+  logger?.log("Syncing complete!");
 }
 
 export function getAllVaultTags(app:App): Set<string> {

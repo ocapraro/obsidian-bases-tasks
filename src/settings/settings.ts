@@ -11,6 +11,8 @@ export interface BasesTasksSettings {
   moveToDailyOption:boolean;
   moveToDailyWithTags:boolean;
   taskTagsToIgnore:string;
+  developerTools:boolean;
+  logging:boolean;
 }
 
 
@@ -19,7 +21,9 @@ export const DEFAULT_SETTINGS: BasesTasksSettings = {
   moveToTomorrowOption:false,
   moveToDailyOption:false,
   moveToDailyWithTags:false,
-  taskTagsToIgnore:""
+  taskTagsToIgnore:"",
+  developerTools:false,
+  logging:false
 }
 
 
@@ -37,10 +41,17 @@ export class BasesTasksSettingTab extends PluginSettingTab {
       button
       .setTooltip("Sync tasks")
       .setIcon("refresh-ccw")
-      .onClick(async()=>{await syncTasks(this.plugin.app.vault)})});
+      .onClick(async()=>{await syncTasks(this.plugin.app.vault, this.plugin.logger)})});
 
+    this.displayDailyNoteSettings(containerEl);
+    this.displayDeveloperSettings(containerEl);
+    
+  }
+
+  displayDailyNoteSettings(containerEl:HTMLElement) {
     new Setting(containerEl)
     .setName("Daily notes integration")
+    .setDesc("Task integrations with daily notes")
     .setHeading()
 
     const dailyNoteFolderPath = new BasesTaskSetting(containerEl)
@@ -136,7 +147,40 @@ export class BasesTasksSettingTab extends PluginSettingTab {
     dailyNoteFolderPath.disableDependencies(!this.plugin.settings.dailyNoteFolderPath);
     moveToDailyOption.hideDependencies(!this.plugin.settings.moveToDailyOption);
     moveToDailyWithTags.hideDependencies(!this.plugin.settings.moveToDailyWithTags);
-    
+  }
+
+  displayDeveloperSettings(containerEl:HTMLElement) {
+    new Setting(containerEl)
+    .setName("Developer tools")
+    .setDesc("Not needed unless you're trying to devlop this plugin.")
+    .setHeading();
+
+    const developerSettings = new BasesTaskSetting(containerEl)
+    .setName("Enable developer tools")
+    .setDesc("Enables other developer options")
+    .addToggle(t =>t
+      .setValue(this.plugin.settings.developerTools)
+      .onChange(async (value)=> {
+        developerSettings.hideDependencies(!value);
+        developerSettings.showDependencies(value);
+        this.plugin.settings.developerTools = value;
+        await this.plugin.saveSettings();
+      })
+    );
+
+    developerSettings.addToDependencies(new BasesTaskSetting(containerEl)
+      .setName("Logging")
+      .setDesc("Starts logging actions in the log file found within this plugin folder.")
+      .addToggle(t =>t
+        .setValue(this.plugin.settings.logging)
+        .onChange(async (value)=> {
+          this.plugin.settings.logging = value;
+          await this.plugin.saveSettings();
+        })
+      )
+    );
+
+    developerSettings.hideDependencies(!this.plugin.settings.developerTools);
   }
 
 
