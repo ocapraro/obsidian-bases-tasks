@@ -3,6 +3,7 @@ import { normalizePath, TFile } from "obsidian";
 
 export class Logger {
   plugin:BasesTasks;
+  queue:(()=>Promise<void>)[] = [];
 
   constructor(plugin:BasesTasks) {
     this.plugin = plugin;
@@ -27,11 +28,22 @@ export class Logger {
     }
   }
 
+  private async execute(promise:()=>Promise<void>){
+    this.queue.push(promise);
+    if(this.queue.length > 1)
+      return;
+    while (this.queue.length) {
+      const currentPromise = this.queue[0];
+      await currentPromise?.();
+      this.queue.shift();
+    }
+  }
+
   log(message:string){
-    this.addToLog(`LOG: ${message}`);
+    this.execute(async()=>{await this.addToLog(`LOG: ${message}`)});
   }
 
   error(message:string){
-    this.addToLog(`ERROR: ${message}`);
+    this.execute(async()=>{await this.addToLog(`ERROR: ${message}`)});
   }
 }
