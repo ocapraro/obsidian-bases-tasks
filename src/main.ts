@@ -54,7 +54,7 @@ export default class BasesTasks extends Plugin {
       id:"sync-tasks",
       name:"Sync all vault tasks",
       callback:async()=>{
-        await syncTasks(this.app.vault);
+        await syncTasks(this.app.vault, this.logger);
       }
     });
 
