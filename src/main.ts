@@ -63,7 +63,7 @@ export default class BasesTasks extends Plugin {
 
   async loadSettings() {
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData() as Partial<BasesTasksSettings>);
-    if(this.settings.developerSettings && this.settings.logging)
+    if(this.settings.developerTools && this.settings.logging)
       this.logger = new Logger(this);
 	}
 

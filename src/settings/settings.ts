@@ -11,7 +11,7 @@ export interface BasesTasksSettings {
   moveToDailyOption:boolean;
   moveToDailyWithTags:boolean;
   taskTagsToIgnore:string;
-  developerSettings:boolean;
+  developerTools:boolean;
   logging:boolean;
 }
 
@@ -22,7 +22,7 @@ export const DEFAULT_SETTINGS: BasesTasksSettings = {
   moveToDailyOption:false,
   moveToDailyWithTags:false,
   taskTagsToIgnore:"",
-  developerSettings:false,
+  developerTools:false,
   logging:false
 }
 
@@ -151,19 +151,19 @@ export class BasesTasksSettingTab extends PluginSettingTab {
 
   displayDeveloperSettings(containerEl:HTMLElement) {
     new Setting(containerEl)
-    .setName("Developer settings")
+    .setName("Developer tools")
     .setDesc("Not needed unless you're trying to devlop this plugin.")
     .setHeading();
 
     const developerSettings = new BasesTaskSetting(containerEl)
-    .setName("Enable developer settings")
+    .setName("Enable developer tools")
     .setDesc("Enables other developer options")
     .addToggle(t =>t
-      .setValue(this.plugin.settings.developerSettings)
+      .setValue(this.plugin.settings.developerTools)
       .onChange(async (value)=> {
         developerSettings.hideDependencies(!value);
         developerSettings.showDependencies(value);
-        this.plugin.settings.developerSettings = value;
+        this.plugin.settings.developerTools = value;
         await this.plugin.saveSettings();
       })
     );
@@ -180,7 +180,7 @@ export class BasesTasksSettingTab extends PluginSettingTab {
       )
     );
 
-    developerSettings.hideDependencies(!this.plugin.settings.developerSettings);
+    developerSettings.hideDependencies(!this.plugin.settings.developerTools);
   }
 
 

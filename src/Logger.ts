@@ -1,5 +1,5 @@
 import BasesTasks from "main";
-import { normalizePath, TFile } from "obsidian";
+import { normalizePath } from "obsidian";
 
 export class Logger {
   plugin:BasesTasks;
@@ -34,16 +34,16 @@ export class Logger {
       return;
     while (this.queue.length) {
       const currentPromise = this.queue[0];
-      await currentPromise?.();
+      void await currentPromise?.();
       this.queue.shift();
     }
   }
 
   log(message:string){
-    this.execute(async()=>{await this.addToLog(`LOG: ${message}`)});
+    void this.execute(()=>this.addToLog(`LOG: ${message}`));
   }
 
   error(message:string){
-    this.execute(async()=>{await this.addToLog(`ERROR: ${message}`)});
+    void this.execute(()=>this.addToLog(`ERROR: ${message}`));
   }
 }
