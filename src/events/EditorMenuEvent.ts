@@ -24,12 +24,10 @@ export default class EditorMenuEvent {
           const cursor = editor.getCursor();
           const targetLine = editor.getLine(cursor.line);
           const dailyNotePath = `${this.plugin.settings.dailyNoteFolderPath}/${new Date().toLocaleDateString("en-CA")}.md`;
-          const nextDate = new Date();
-          nextDate.setDate(nextDate.getDate() + 1);
-          const nextDayNotePath = `${this.plugin.settings.dailyNoteFolderPath}/${nextDate.toLocaleDateString("en-CA")}.md`;
-          const view = this.plugin.app.workspace.getActiveViewOfType(MarkdownView);
-          this.addMoveToDailyNote(menu,editor,targetLine,dailyNotePath,view||undefined);
-          this.addPushBackADay(menu,editor,targetLine,nextDayNotePath,this.plugin.settings.dailyNoteFolderPath,view||undefined);
+          const view = this.plugin.app.workspace.getActiveViewOfType(MarkdownView)||undefined;
+
+          this.addMoveToDailyNote(menu,editor,targetLine,dailyNotePath,view);
+          this.addPushBackADay(menu,editor,targetLine,this.plugin.settings.dailyNoteFolderPath,view);
           
         }
       )
@@ -63,25 +61,30 @@ export default class EditorMenuEvent {
   addPushBackADay(
     menu:Menu, 
     editor:Editor,
-    targetLine:string, 
-    nextDayNotePath:string,
+    targetLine:string,
     dailyNoteFolderPath:string,
     view?: MarkdownView
   ) {
-    if(
+    if(!(
       this.plugin.settings.dailyNoteFolderPath && // Make sure the user has enabled the move to daily note option
       this.plugin.settings.moveToDailyOption && 
       targetLine.match(TASK_REGEX) && // they are clicking on a task
       (view?.file?.path.startsWith(dailyNoteFolderPath)) // they are in a dailynote
-    )
-      menu.addItem((item) => {
-        // move to daily note menu option
-        item
-          .setTitle("Move to next day")
-          .setIcon("calendar")
-          .onClick(async () => {
-            await moveTaskToNote(this.plugin, nextDayNotePath, targetLine, editor);
-          });
-      });
+    ))
+      return;
+    // Get current note name, and add a day to it
+    const noteName = view.file.name.replace(".md","");
+    const targetNoteDate = new Date(noteName + "T00:00:00");
+    targetNoteDate.setDate(targetNoteDate.getDate() + 1);
+    const targetNote = `${this.plugin.settings.dailyNoteFolderPath}/${targetNoteDate.toLocaleDateString("en-CA")}.md`;
+    menu.addItem((item) => {
+      // move to daily note menu option
+      item
+        .setTitle("Move to next day")
+        .setIcon("calendar")
+        .onClick(async () => {
+          await moveTaskToNote(this.plugin, targetNote, targetLine, editor);
+        });
+    });
   }
 }
