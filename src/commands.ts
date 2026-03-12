@@ -1,7 +1,7 @@
 import { Logger } from "Logger";
 import { PROPERTIES_REGEX, TASK_REGEX } from "./constants";
 import BasesTasks from "main";
-import { App, Editor, getAllTags, Notice, parseYaml, stringifyYaml, Vault } from "obsidian";
+import { App, Editor, EditorPosition, EditorSelection, getAllTags, Notice, parseYaml, stringifyYaml, Vault } from "obsidian";
 import Properties from "Properties";
 import { strArraysEqual } from "utils";
 
@@ -9,33 +9,61 @@ import { strArraysEqual } from "utils";
  * 
  * @param plugin the main plugin
  * @param notePath the path to the note you want to move the task to
- * @param targetTask the raw text of the task to move
+ * @param targetTasks the raw text of the task to move
  * @param editor the editor of the current note
  */
 export async function moveTaskToNote(
   plugin:BasesTasks, 
   notePath:string,
-  targetTask:string,
   editor:Editor,
 ) {
-  plugin.logger?.log(`Moving "${targetTask.slice(6)}" to "${notePath}"`);
   const cursor = editor.getCursor();
+  const editorSelection:EditorSelection = editor.listSelections()[0] || {anchor:cursor,head:cursor};
+  const selectedLines:[EditorPosition, EditorPosition] = [
+    {
+      line: Math.min(editorSelection.anchor.line, editorSelection.head.line),
+      ch:0
+    }, 
+    {
+      line: Math.max(editorSelection.anchor.line, editorSelection.head.line)+1,
+      ch:0
+    }
+  ];
   const taskNote = editor.getValue();
   const properties = getProperties(taskNote);
-  // Find the daily note
+  const targetLines = editor
+    .getRange(...selectedLines)
+    .split("\n")
+  ;
+  const targetTasks = targetLines.filter(l=>l.match(TASK_REGEX));
+
+  targetTasks.forEach(task=>
+    plugin.logger?.log(`Moving "${task.slice(6)}" to "${notePath}"`)
+  );
+
+  // Find the target note
   const file = plugin.app.vault.getFileByPath(notePath);
   if(!file){
     new Notice(notePath+" not found");
     plugin.logger?.log(`"${notePath}" not found`);
     return;
   }
-  let newTask = targetTask;
-  let filteredTags = properties.tags?.filter(t=>!newTask.match(new RegExp(`#${t}\\b`)))||[];
-  if(plugin.settings.taskTagsToIgnore)
-    filteredTags = filteredTags.filter(t=>!plugin.settings.taskTagsToIgnore.split(",").includes("#"+t));
-  if(plugin.settings.moveToDailyWithTags && filteredTags.length)
-    newTask += " #" + filteredTags.join(" #");
-  // splice in the targeted task after the last task in the daily note or at the end
+
+  // Add the note tags to the tasks being moved
+  let newTasks:string[] = [];
+  targetTasks.forEach(task=>{
+    let filteredTags = properties.tags?.filter(t=>!task.match(new RegExp(`#${t}\\b`)))||[];
+    // Filter out user specified tags
+    if(plugin.settings.taskTagsToIgnore)
+      filteredTags = filteredTags.filter(t=>!plugin.settings.taskTagsToIgnore.split(",").includes("#"+t));
+    // Don't add them if the setting is not enabled
+    if(plugin.settings.moveToDailyWithTags && filteredTags.length)
+      task += " #" + filteredTags.join(" #");
+    newTasks.push(task);
+  });
+  
+
+  // Splice in the targeted task after the last task in the target note or at the end
   const rawFile = await plugin.app.vault.read(file);
   const splitFile = rawFile.split("\n");
   splitFile.reverse();
@@ -44,29 +72,28 @@ export async function moveTaskToNote(
     const line = splitFile[i];
     if(!line?.match(TASK_REGEX))
       continue;
-    splitFile.splice(i,0,newTask);
+    splitFile.splice(i,0,newTasks.join("\n"));
     match = true;
     break;
   }
   splitFile.reverse();
   if(!match)
-    splitFile.push(newTask);
+    splitFile.push(newTasks.join("\n"));
 
-  // update the properties, then update the note
+  // Update the properties, then update the note
   await plugin.app.vault.modify(file,updateRawFileTasks(splitFile.join("\n")));
 
-  // remove task from current note
+  // Remove task from current note
   editor.replaceRange(
-    "", 
-    { line: cursor.line, ch: 0 },
-    { line: cursor.line + 1, ch: 0 }
+    targetLines.filter(l=>!l.match(TASK_REGEX)).join("\n"), 
+    ...selectedLines
   );
   const line = Math.min(cursor.line, editor.getValue().split("\n").length);
   const ch = Math.min(cursor.ch, editor.getLine(line).length);
 
   editor.setCursor({line,ch});
   new Notice("Task moved");
-  plugin.logger?.log(`Moved "${targetTask.slice(6)}" to "${notePath}"`);
+  plugin.logger?.log(`Moved "${targetTasks.slice(6)}" to "${notePath}"`);
 }
 
 /**

@@ -53,7 +53,7 @@ export default class EditorMenuEvent {
           .setTitle("Move to daily note")
           .setIcon("calendar")
           .onClick(async () => {
-            await moveTaskToNote(this.plugin, dailyNotePath, targetLine, editor);
+            await moveTaskToNote(this.plugin, dailyNotePath, editor);
           });
       });
   }
@@ -83,7 +83,7 @@ export default class EditorMenuEvent {
         .setTitle("Move to next day")
         .setIcon("calendar")
         .onClick(async () => {
-          await moveTaskToNote(this.plugin, targetNote, targetLine, editor);
+          await moveTaskToNote(this.plugin, targetNote, editor);
         });
     });
   }
