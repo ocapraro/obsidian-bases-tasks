@@ -87,8 +87,8 @@ export async function moveTaskToNote(
     targetLines.filter(l=>!l.match(TASK_REGEX)).join("\n"), 
     ...selectedLines
   );
-  const line = Math.min(cursor.line, editor.getValue().split("\n").length);
-  const ch = Math.min(cursor.ch, editor.getLine(line).length);
+  const line = Math.min(selectedLines[0].line, editor.getValue().split("\n").length);
+  const ch = Math.min(selectedLines[0].ch, editor.getLine(line).length);
 
   editor.setCursor({line,ch});
   new Notice("Task moved");
