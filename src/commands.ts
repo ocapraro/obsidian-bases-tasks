@@ -35,8 +35,8 @@ export async function moveTaskToNote(
     .getRange(...selectedLines)
     .split("\n")
   ;
-  const targetTasks = targetLines.filter(l=>l.match(TASK_REGEX));
-
+  const targetTasks = targetLines.filter(l=>l&&l.match(TASK_REGEX));
+  console.log(targetTasks);
   targetTasks.forEach(task=>
     plugin.logger?.log(`Moving "${task.slice(6)}" to "${notePath}"`)
   );
@@ -93,7 +93,7 @@ export async function moveTaskToNote(
 
   editor.setCursor({line,ch});
   new Notice("Task moved");
-  plugin.logger?.log(`Moved "${targetTasks.slice(6)}" to "${notePath}"`);
+  plugin.logger?.log(`Moved ${targetTasks.length} task(s) to "${notePath}"`);
 }
 
 /**
