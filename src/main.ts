@@ -1,5 +1,5 @@
 import EditorMenuEvent from './events/EditorMenuEvent';
-import { TYPE_DETECT_DELAY } from './constants';
+import { TASK_REGEX, TYPE_DETECT_DELAY } from './constants';
 import { MarkdownView, Notice, Plugin} from 'obsidian';
 import { BasesTasksSettings, BasesTasksSettingTab, DEFAULT_SETTINGS } from 'settings/settings';
 import { moveTaskToNote, updateCurrentFileTasks, syncTasks } from 'commands';
@@ -45,8 +45,12 @@ export default class BasesTasks extends Plugin {
         }
         const cursor = editor.getCursor();
         const targetLine = editor.getLine(cursor.line);
+        if(!targetLine.match(TASK_REGEX)) {
+          new Notice("Selection contains no valid tasks.")
+          return;
+        }
         const dailyNotePath = `${this.settings.dailyNoteFolderPath}/${new Date().toLocaleDateString("en-CA")}.md`;
-        await moveTaskToNote(this, dailyNotePath, targetLine, editor)
+        await moveTaskToNote(this, dailyNotePath, editor)
       }
     });
 
