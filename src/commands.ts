@@ -36,7 +36,6 @@ export async function moveTaskToNote(
     .split("\n")
   ;
   const targetTasks = targetLines.filter(l=>l&&l.match(TASK_REGEX));
-  console.log(targetTasks);
   targetTasks.forEach(task=>
     plugin.logger?.log(`Moving "${task.slice(6)}" to "${notePath}"`)
   );
