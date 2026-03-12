@@ -82,6 +82,7 @@ export async function moveTaskToNote(
   // Update the properties, then update the note
   await plugin.app.vault.modify(file,updateRawFileTasks(splitFile.join("\n")));
 
+
   // Remove task from current note
   editor.replaceRange(
     targetLines.filter(l=>!l.match(TASK_REGEX)).join("\n"), 
@@ -129,13 +130,12 @@ function getUpdatedProperties(rawFile:string): Properties {
  * @returns the updated note
  */
 export function updateRawFileTasks(rawFile:string):string {
-  const splitFile = rawFile.split("\n");
-  const tasks = splitFile.filter(line=>line.match(TASK_REGEX));
-  const properties = getUpdatedProperties(rawFile);
-  if(strArraysEqual(properties["tasks"], tasks))
+  const oldProperties = getProperties(rawFile);
+  const newProperties = getUpdatedProperties(rawFile);
+  if(strArraysEqual(newProperties["tasks"], oldProperties["tasks"]))
     return rawFile;
   const propertylessFile = rawFile.replace(PROPERTIES_REGEX,"");
-  const newFile = `---\n${stringifyYaml(properties)}\n---\n${propertylessFile}`;
+  const newFile = `---\n${stringifyYaml(newProperties)}\n---\n${propertylessFile}`;
   return newFile;
 }
 
