@@ -16,8 +16,6 @@ class DragTaskPlugin implements PluginValue {
     }
   }
 
-  destroy() {}
-
   buildDecorations(view: EditorView): DecorationSet {
     const builder = new RangeSetBuilder<Decoration>();
     const doc = view.state.doc;
