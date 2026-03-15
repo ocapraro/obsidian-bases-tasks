@@ -6,6 +6,7 @@ import TagMultiSelect from "./search/TagMultiSelect";
 import { getAllVaultTags, syncTasks } from "commands";
 
 export interface BasesTasksSettings {
+  draggableTasks:boolean;
   dailyNoteFolderPath:string;
   moveToTomorrowOption:boolean;
   moveToDailyOption:boolean;
@@ -17,6 +18,7 @@ export interface BasesTasksSettings {
 
 
 export const DEFAULT_SETTINGS: BasesTasksSettings = {
+  draggableTasks:true,
   dailyNoteFolderPath:"",
   moveToTomorrowOption:false,
   moveToDailyOption:false,
@@ -42,6 +44,17 @@ export class BasesTasksSettingTab extends PluginSettingTab {
       .setTooltip("Sync tasks")
       .setIcon("refresh-ccw")
       .onClick(async()=>{await syncTasks(this.plugin.app.vault, this.plugin.logger)})});
+
+    new Setting(containerEl)
+    .setName("Draggable tasks")
+    .setDesc("Enables dragging tasks to rearrange them.")
+    .addToggle(t=>t
+      .setValue(this.plugin.settings.draggableTasks)
+      .onChange(async (value)=> {
+        this.plugin.settings.draggableTasks = value;
+        await this.plugin.saveSettings();
+      })
+    );
 
     this.displayDailyNoteSettings(containerEl);
     this.displayDeveloperSettings(containerEl);
