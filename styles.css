@@ -12,7 +12,7 @@
   display: none;
 }
 
-.task-list-label::before {
+.task-drag-widget {
   display: inline-block;
   width: 12px;
   height: var(--checkbox-size);
@@ -22,7 +22,7 @@
   margin-right: -5px;
 }
 
-.task-list-label:hover::before {
+.task-drag-widget:hover {
   background:
     radial-gradient(circle, var(--checkbox-border-color) 1px, transparent 1px);
   background-size: 6px 6px;
