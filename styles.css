@@ -11,3 +11,19 @@
 .setting-item.bases-tasks-hidden {
   display: none;
 }
+
+.task-list-label::before {
+  display: inline-block;
+  width: 12px;
+  height: var(--checkbox-size);
+  content: "";
+  cursor: pointer;
+  margin-bottom: -2px;
+  margin-right: -5px;
+}
+
+.task-list-label:hover::before {
+  background:
+    radial-gradient(circle, var(--checkbox-border-color) 1px, transparent 1px);
+  background-size: 6px 6px;
+}
