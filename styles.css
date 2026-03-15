@@ -27,3 +27,7 @@
     radial-gradient(circle, var(--checkbox-border-color) 1px, transparent 1px);
   background-size: 6px 6px;
 }
+
+.HyperMD-task-line.cm-line.bases-tasks-hidden {
+  visibility: hidden;
+}
