@@ -1,3 +1,4 @@
+import { ChangeSpec } from '@codemirror/state';
 import { EditorView, WidgetType } from '@codemirror/view';
 
 export class DragTaskWidget extends WidgetType {
@@ -27,12 +28,15 @@ export class DragTaskWidget extends WidgetType {
       
       if (sourceLine.number === targetLine.number) 
         return;
-
+      const changes:ChangeSpec[] = [{from:sourceLine.from, to:Math.min(sourceLine.to+1, view.state.doc.length), insert:""}];
+      // If dragging from above, slot below and visa versa
+      if (sourceLine.to<targetLine.from) {
+        changes.push({from:targetLine.to, insert:"\n"+sourceLine.text});
+      } else {
+        changes.push({from:targetLine.from, insert:sourceLine.text+"\n"});
+      }
       view.dispatch({
-        changes:[
-          {from:sourceLine.from, to:Math.min(sourceLine.to+1, ), insert:""},
-          {from:targetLine.from, insert:sourceLine.text+"\n"}
-        ]
+        changes
       });
     })
 
