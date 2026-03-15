@@ -19,7 +19,8 @@ export default class BasesTasks extends Plugin {
   async onload(): Promise<void> {
     await this.loadSettings();
     this.logger?.log("Loaded");
-    this.registerEditorExtension(dragTaskPlugin);
+    if(this.settings.draggableTasks)
+      this.registerEditorExtension(dragTaskPlugin);
 
     // Save tasks to properties on editor
     this.registerEvent(this.app.workspace.on("editor-change", async(editor, info)=>{

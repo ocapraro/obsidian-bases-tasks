@@ -47,7 +47,7 @@ export class BasesTasksSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
     .setName("Draggable tasks")
-    .setDesc("Enables dragging tasks to rearrange them.")
+    .setDesc("Enables dragging tasks to rearrange them (you must reload for changes to take effect).")
     .addToggle(t=>t
       .setValue(this.plugin.settings.draggableTasks)
       .onChange(async (value)=> {
