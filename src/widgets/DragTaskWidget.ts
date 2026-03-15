@@ -19,18 +19,39 @@ export class DragTaskWidget extends WidgetType {
     const targetLineElementIndex = this.lineNumber + lineElements.length - lineCount - 1;
     const targetLineElement = lineElements[targetLineElementIndex];
 
+    let draggingLineNumber:number|null = null;
+
+    document.querySelectorAll(".HyperMD-task-line.cm-line").forEach(line=>{
+      line.addEventListener("dragover",()=>{
+        if(draggingLineNumber !== null)
+          line.addClass("bases-tasks-selectable");
+      });
+      line.addEventListener("dragleave",()=>{
+        if(draggingLineNumber !== null)
+          line.removeClass("bases-tasks-selectable");
+      });
+    });
+
     span.addEventListener("dragstart", (e) => {
       e.dataTransfer?.setData("text/plain", String(this.lineNumber));
       e.dataTransfer!.effectAllowed = "move";
-
+      draggingLineNumber = this.lineNumber;
       setTimeout(() => {
         targetLineElement?.addClass("bases-tasks-hidden");
       }, 0);
     });
 
+    span.addEventListener("drag",(e)=>{
+      e.preventDefault();
+    })
+
     span.addEventListener("dragend", (e)=>{
       e.preventDefault();
+      draggingLineNumber = null;
       targetLineElement?.removeClass("bases-tasks-hidden");
+      document.querySelectorAll(".HyperMD-task-line.cm-line.bases-tasks-selectable").forEach(line=>{
+        line.removeClass("bases-tasks-selectable");
+      });
       const pos = view.posAtCoords({ x: e.clientX, y: e.clientY });
       if(!pos)
         return;

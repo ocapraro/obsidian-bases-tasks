@@ -34,3 +34,7 @@
 .HyperMD-task-line.cm-line.bases-tasks-hidden {
   visibility: hidden;
 }
+
+.HyperMD-task-line.cm-line.bases-tasks-selectable {
+  background-color: rgba(73, 79, 131, 0.525);
+}
