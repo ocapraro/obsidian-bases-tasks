@@ -1,4 +1,3 @@
-import { syntaxTree } from '@codemirror/language';
 import { RangeSetBuilder } from "@codemirror/state";
 import { Decoration, DecorationSet, EditorView, PluginSpec, PluginValue, ViewPlugin, ViewUpdate } from "@codemirror/view";
 import { TASK_REGEX } from '../constants';
@@ -34,7 +33,7 @@ class DragTaskPlugin implements PluginValue {
         line.from,
         line.from,
         Decoration.widget({
-          widget: new DragTaskWidget(),
+          widget: new DragTaskWidget(i),
           side: -1,
         })
       );
