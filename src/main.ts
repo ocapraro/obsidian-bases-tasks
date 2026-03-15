@@ -4,6 +4,7 @@ import { MarkdownView, Notice, Plugin} from 'obsidian';
 import { BasesTasksSettings, BasesTasksSettingTab, DEFAULT_SETTINGS } from 'settings/settings';
 import { moveTaskToNote, updateCurrentFileTasks, syncTasks } from 'commands';
 import { Logger } from 'Logger';
+import { dragTaskPlugin } from 'extensions/DragTaskPlugin';
 
 
 
@@ -18,6 +19,7 @@ export default class BasesTasks extends Plugin {
   async onload(): Promise<void> {
     await this.loadSettings();
     this.logger?.log("Loaded");
+    this.registerEditorExtension(dragTaskPlugin);
 
     // Save tasks to properties on editor
     this.registerEvent(this.app.workspace.on("editor-change", async(editor, info)=>{

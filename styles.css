@@ -19,7 +19,7 @@
   content: "";
   cursor: pointer;
   margin-bottom: -2px;
-  margin-right: -5px;
+  margin-left: -12px;
 }
 
 .task-drag-widget:hover {
