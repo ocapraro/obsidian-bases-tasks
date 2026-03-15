@@ -13,19 +13,22 @@
 }
 
 .task-drag-widget {
-  display: inline-block;
+  display: block;
   width: 12px;
-  height: var(--checkbox-size);
-  content: "";
+  height: 28px;
   cursor: pointer;
-  margin-bottom: -2px;
-  margin-left: -12px;
+  left: -10px;
+  position: absolute;
+  color: var(--checkbox-border-color);
+  letter-spacing: -2px;
+  opacity: 0;
 }
 
 .task-drag-widget:hover {
-  background:
-    radial-gradient(circle, var(--checkbox-border-color) 1px, transparent 1px);
   background-size: 6px 6px;
+  position: absolute;
+  width: 100%;
+  opacity: 1;
 }
 
 .HyperMD-task-line.cm-line.bases-tasks-hidden {

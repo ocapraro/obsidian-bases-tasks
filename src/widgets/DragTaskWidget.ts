@@ -10,25 +10,27 @@ export class DragTaskWidget extends WidgetType {
 
   toDOM(view:EditorView): HTMLElement {
     const span = document.createElement('span');
+    span.appendText("⋮⋮");
     span.classList.add("task-drag-widget");
     span.draggable = true;
 
     const lineElements = document.querySelectorAll(".cm-line");
     const lineCount = view.state.doc.lines;
     const targetLineElementIndex = this.lineNumber + lineElements.length - lineCount - 1;
+    const targetLineElement = lineElements[targetLineElementIndex];
 
     span.addEventListener("dragstart", (e) => {
       e.dataTransfer?.setData("text/plain", String(this.lineNumber));
       e.dataTransfer!.effectAllowed = "move";
-      
+
       setTimeout(() => {
-        lineElements[targetLineElementIndex]?.addClass("bases-tasks-hidden");
+        targetLineElement?.addClass("bases-tasks-hidden");
       }, 0);
     });
 
     span.addEventListener("dragend", (e)=>{
       e.preventDefault();
-      lineElements[targetLineElementIndex]?.removeClass("bases-tasks-hidden");
+      targetLineElement?.removeClass("bases-tasks-hidden");
       const pos = view.posAtCoords({ x: e.clientX, y: e.clientY });
       if(!pos)
         return;
