@@ -14,10 +14,7 @@ export class DragTaskWidget extends WidgetType {
     span.classList.add("task-drag-widget");
     span.draggable = true;
 
-    const lineElements = document.querySelectorAll(".cm-line");
-    const lineCount = view.state.doc.lines;
-    const targetLineElementIndex = this.lineNumber + lineElements.length - lineCount - 1;
-    const targetLineElement = lineElements[targetLineElementIndex];
+    const line = view.state.doc.line(this.lineNumber);
 
     let draggingLineNumber:number|null = null;
 
@@ -33,6 +30,7 @@ export class DragTaskWidget extends WidgetType {
     });
 
     span.addEventListener("dragstart", (e) => {
+      const targetLineElement = (e.target as HTMLElement)?.closest(".cm-line");
       e.dataTransfer?.setData("text/plain", String(this.lineNumber));
       e.dataTransfer!.effectAllowed = "move";
       draggingLineNumber = this.lineNumber;
@@ -41,12 +39,9 @@ export class DragTaskWidget extends WidgetType {
       }, 0);
     });
 
-    span.addEventListener("drag",(e)=>{
-      e.preventDefault();
-    })
-
     span.addEventListener("dragend", (e)=>{
       e.preventDefault();
+      const targetLineElement = (e.target as HTMLElement)?.closest(".cm-line");
       draggingLineNumber = null;
       targetLineElement?.removeClass("bases-tasks-hidden");
       document.querySelectorAll(".HyperMD-task-line.cm-line.bases-tasks-selectable").forEach(line=>{
