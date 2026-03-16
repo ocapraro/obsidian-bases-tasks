@@ -9,17 +9,18 @@ import { strArraysEqual } from "utils";
  * 
  * @param plugin the main plugin
  * @param notePath the path to the note you want to move the task to
- * @param targetTasks the raw text of the task to move
  * @param editor the editor of the current note
+ * @param nonCursorLines if you want to move a task thats not where the current cursor/selection is
  */
 export async function moveTaskToNote(
   plugin:BasesTasks, 
   notePath:string,
   editor:Editor,
+  nonCursorLines?:[EditorPosition, EditorPosition]
 ) {
   const cursor = editor.getCursor();
   const editorSelection:EditorSelection = editor.listSelections()[0] || {anchor:cursor,head:cursor};
-  const selectedLines:[EditorPosition, EditorPosition] = [
+  const selectedLines:[EditorPosition, EditorPosition] = nonCursorLines || [
     {
       line: Math.min(editorSelection.anchor.line, editorSelection.head.line),
       ch:0

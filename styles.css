@@ -35,6 +35,7 @@
   visibility: hidden;
 }
 
-.HyperMD-task-line.cm-line.bases-tasks-selectable {
+.HyperMD-task-line.cm-line.bases-tasks-selecting, 
+#calendar-container tbody td .day.bases-tasks-selecting {
   background-color: rgba(73, 79, 131, 0.525);
 }

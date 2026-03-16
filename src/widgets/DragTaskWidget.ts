@@ -16,27 +16,17 @@ export class DragTaskWidget extends WidgetType {
     span.classList.add("task-drag-widget");
     span.draggable = true;
 
-    const line = view.state.doc.line(this.lineNumber);
-
-    let draggingLineNumber:number|null = null;
-
-    // Add highlights when dragging a task over others
-    document.querySelectorAll(".HyperMD-task-line.cm-line").forEach(line=>{
-      line.addEventListener("dragover",()=>{
-        if(draggingLineNumber !== null)
-          line.addClass("bases-tasks-selectable");
-      });
-      line.addEventListener("dragleave",()=>{
-        if(draggingLineNumber !== null)
-          line.removeClass("bases-tasks-selectable");
-      });
-    });
 
     span.addEventListener("dragstart", (e) => {
       const targetLineElement = (e.target as HTMLElement)?.closest(".cm-line");
       e.dataTransfer?.setData("text/plain", String(this.lineNumber));
       e.dataTransfer!.effectAllowed = "move";
-      draggingLineNumber = this.lineNumber;
+      document.querySelectorAll(`
+        .HyperMD-task-line.cm-line,
+        #calendar-container tbody td .day
+      `).forEach(elem=>{
+        elem.addClass("bases-tasks-selectable");
+      });
       setTimeout(() => {
         targetLineElement?.addClass("bases-tasks-hidden");
       }, 0);
@@ -45,10 +35,13 @@ export class DragTaskWidget extends WidgetType {
     span.addEventListener("dragend", (e)=>{
       e.preventDefault();
       const sourceLineElement = (e.target as HTMLElement)?.closest(".cm-line");
-      draggingLineNumber = null;
       sourceLineElement?.removeClass("bases-tasks-hidden");
-      document.querySelectorAll(".HyperMD-task-line.cm-line.bases-tasks-selectable").forEach(line=>{
-        line.removeClass("bases-tasks-selectable");
+      document.querySelectorAll(`
+        .HyperMD-task-line.cm-line.bases-tasks-selectable,
+        #calendar-container tbody td .day.bases-tasks-selectable
+      `).forEach(elem=>{
+        elem.addClass("bases-tasks-selectable");
+        elem.removeClass("bases-tasks-selecting");
       });
 
       const rect = view.dom.getBoundingClientRect();

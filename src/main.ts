@@ -19,8 +19,51 @@ export default class BasesTasks extends Plugin {
   async onload(): Promise<void> {
     await this.loadSettings();
     this.logger?.log("Loaded");
-    if(this.settings.draggableTasks)
+    if(this.settings.draggableTasks) {
       this.registerEditorExtension(dragTaskPlugin);
+
+      // Handles dragover events
+      this.registerDomEvent(document, "dragover", (e) => {
+        const line = (e.target as HTMLElement).closest(".HyperMD-task-line.cm-line");
+        if (line?.hasClass("bases-tasks-selectable"))
+          line.addClass("bases-tasks-selecting");
+
+        const day = (e.target as HTMLElement).closest("#calendar-container tbody td .day:not(.adjacent-month)");
+        if (day) {
+          e.preventDefault();
+          if (day.hasClass("bases-tasks-selectable"))
+            day.addClass("bases-tasks-selecting");
+        }
+      });
+
+      // Handles dragleave events
+      this.registerDomEvent(document, "dragleave", (e) => {
+        const line = (e.target as HTMLElement).closest(".HyperMD-task-line.cm-line");
+        line?.removeClass("bases-tasks-selecting");
+
+        const day = (e.target as HTMLElement).closest("#calendar-container tbody td .day");
+        day?.removeClass("bases-tasks-selecting");
+      });
+
+      // Handles drop events
+      this.registerDomEvent(document, "drop", async (e) => {
+        const day = (e.target as HTMLElement).closest("#calendar-container tbody td .day");
+        const year = document.querySelector("#calendar-container .year");
+        const month = document.querySelector("#calendar-container .month");
+        if (day&&month&&year) {
+          const targetDate = new Date(`${month.getText()} ${day.getText()} ${year.getText()}`);
+          const dailyNotePath = `${this.settings.dailyNoteFolderPath}/${targetDate.toLocaleDateString("en-CA")}.md`;
+          const lineNumber = parseInt(e.dataTransfer?.getData("text/plain")||"0")-1;
+          const editor = this.app.workspace.activeEditor?.editor;
+          if(!editor || lineNumber<0)
+            return;
+          await moveTaskToNote(this, dailyNotePath, editor, [
+            {line:lineNumber, ch:0},
+            {line:lineNumber+1, ch:0}
+          ]);
+        }
+      });
+    }
 
     // Save tasks to properties on editor
     this.registerEvent(this.app.workspace.on("editor-change", async(editor, info)=>{
