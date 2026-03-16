@@ -41,9 +41,9 @@ export class DragTaskWidget extends WidgetType {
 
     span.addEventListener("dragend", (e)=>{
       e.preventDefault();
-      const targetLineElement = (e.target as HTMLElement)?.closest(".cm-line");
+      const sourceLineElement = (e.target as HTMLElement)?.closest(".cm-line");
       draggingLineNumber = null;
-      targetLineElement?.removeClass("bases-tasks-hidden");
+      sourceLineElement?.removeClass("bases-tasks-hidden");
       document.querySelectorAll(".HyperMD-task-line.cm-line.bases-tasks-selectable").forEach(line=>{
         line.removeClass("bases-tasks-selectable");
       });
