@@ -2,8 +2,10 @@ import { ChangeSpec } from '@codemirror/state';
 import { EditorView, WidgetType } from '@codemirror/view';
 import { TASK_REGEX } from '../constants';
 
+/**
+ * The widget that controls dragging tasks
+ */
 export class DragTaskWidget extends WidgetType {
-
   constructor(private lineNumber:number) {
     super();
   }
@@ -18,6 +20,7 @@ export class DragTaskWidget extends WidgetType {
 
     let draggingLineNumber:number|null = null;
 
+    // Add highlights when dragging a task over others
     document.querySelectorAll(".HyperMD-task-line.cm-line").forEach(line=>{
       line.addEventListener("dragover",()=>{
         if(draggingLineNumber !== null)
@@ -47,8 +50,16 @@ export class DragTaskWidget extends WidgetType {
       document.querySelectorAll(".HyperMD-task-line.cm-line.bases-tasks-selectable").forEach(line=>{
         line.removeClass("bases-tasks-selectable");
       });
+
+      const rect = view.dom.getBoundingClientRect();
+      const insideEditor =
+        e.clientX >= rect.left &&
+        e.clientX <= rect.right &&
+        e.clientY >= rect.top &&
+        e.clientY <= rect.bottom;
       const pos = view.posAtCoords({ x: e.clientX, y: e.clientY });
-      if(!pos)
+      // Exit out if not dragged to a valid task line
+      if(!insideEditor || !pos)
         return;
 
       const sourceLine = view.state.doc.line(this.lineNumber);
