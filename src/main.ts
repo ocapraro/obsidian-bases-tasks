@@ -55,7 +55,8 @@ export default class BasesTasks extends Plugin {
           const dailyNotePath = `${this.settings.dailyNoteFolderPath}/${targetDate.toLocaleDateString("en-CA")}.md`;
           const lineNumber = parseInt(e.dataTransfer?.getData("text/plain")||"0")-1;
           const editor = this.app.workspace.activeEditor?.editor;
-          if(!editor || lineNumber<0)
+          const file = this.app.workspace.activeEditor?.file;
+          if(!editor || !file || file.path === dailyNotePath || lineNumber<0)
             return;
           await moveTaskToNote(this, dailyNotePath, editor, [
             {line:lineNumber, ch:0},
