@@ -19,7 +19,7 @@ export class DragTaskWidget extends WidgetType {
 
     span.addEventListener("dragstart", (e) => {
       const targetLineElement = (e.target as HTMLElement)?.closest(".cm-line");
-      e.dataTransfer?.setData("text/plain", String(this.lineNumber));
+      e.dataTransfer?.setData("application/x-bases-task-line", String(this.lineNumber));
       e.dataTransfer!.effectAllowed = "move";
       document.querySelectorAll(`
         .HyperMD-task-line.cm-line,

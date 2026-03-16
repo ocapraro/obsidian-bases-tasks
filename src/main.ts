@@ -25,8 +25,11 @@ export default class BasesTasks extends Plugin {
       // Handles dragover events
       this.registerDomEvent(document, "dragover", (e) => {
         const line = (e.target as HTMLElement).closest(".HyperMD-task-line.cm-line");
-        if (line?.hasClass("bases-tasks-selectable"))
+        if (line?.hasClass("bases-tasks-selectable")) {
+          e.preventDefault();
+          e.dataTransfer!.dropEffect = "move";
           line.addClass("bases-tasks-selecting");
+        }
 
         const day = (e.target as HTMLElement).closest("#calendar-container tbody td .day:not(.adjacent-month)");
         if (day) {
@@ -47,13 +50,19 @@ export default class BasesTasks extends Plugin {
 
       // Handles drop events
       this.registerDomEvent(document, "drop", async (e) => {
+        const line = (e.target as HTMLElement).closest(".HyperMD-task-line.cm-line");
+        if(line){
+          e.preventDefault();
+          e.stopPropagation();
+        }
+
         const day = (e.target as HTMLElement).closest("#calendar-container tbody td .day");
         const year = document.querySelector("#calendar-container .year");
         const month = document.querySelector("#calendar-container .month");
         if (day&&month&&year) {
           const targetDate = new Date(`${month.getText()} ${day.getText()} ${year.getText()}`);
           const dailyNotePath = `${this.settings.dailyNoteFolderPath}/${targetDate.toLocaleDateString("en-CA")}.md`;
-          const lineNumber = parseInt(e.dataTransfer?.getData("text/plain")||"0")-1;
+          const lineNumber = parseInt(e.dataTransfer?.getData("application/x-bases-task-line")||"0")-1;
           const editor = this.app.workspace.activeEditor?.editor;
           const file = this.app.workspace.activeEditor?.file;
           if(!editor || !file || file.path === dailyNotePath || lineNumber<0)
