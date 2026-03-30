@@ -263,6 +263,7 @@ export function sortTasks(editor:Editor):void {
     end: -1,
     tasks: []
   };
+
   splitFile.forEach((line, i) => {
     if(line.match(TASK_REGEX)) {
       if (currentTaskGroup.start < 0)
@@ -280,6 +281,10 @@ export function sortTasks(editor:Editor):void {
       }
     }
   });
+  if(currentTaskGroup.start>=0 && currentTaskGroup.end<0){
+    currentTaskGroup.end = splitFile.length + offset;
+    taskGroups.push(currentTaskGroup);
+  }
   
   taskGroups.forEach(taskGroup => {
     const sortedTasks = [...taskGroup.tasks];
