@@ -15,6 +15,7 @@ export default class BasesTasks extends Plugin {
   settings:BasesTasksSettings;
   gettingTasksTimeoutID:number;
   logger:Logger|undefined;
+  editing = false;
 
   async onload(): Promise<void> {
     await this.loadSettings();
@@ -84,10 +85,14 @@ export default class BasesTasks extends Plugin {
       if(this.gettingTasksTimeoutID !== null)
         clearTimeout(this.gettingTasksTimeoutID);
       this.gettingTasksTimeoutID = setTimeout(()=>{
+        if (this.editing)
+          return;
+        this.editing = true;
         if(this.settings.moveCompleted)
-          sortTasks(editor);
+          sortTasks(editor, this.logger);
         // Save tasks to properties
         updateCurrentFileTasks(editor);
+        this.editing = false;
       }, TYPE_DETECT_DELAY) as unknown as number;
     }));
 

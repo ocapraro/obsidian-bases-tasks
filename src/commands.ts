@@ -226,11 +226,11 @@ function countNewCompletedTasks(editor:Editor):number {
 
   let newCompletedTasks = 0;
   properties["tasks"].forEach(task => {
-    const cleanTask = task.replace(TASK_REGEX, "").trim();
-    let flippedTask = "- [x] "+cleanTask;
+    const cleanTask = task.replace(TASK_REGEX, "");
+    let flippedTask = "- [x]"+cleanTask;
     let modifier = 1;
     if(task.match(COMPLETED_TASK_REGEX)){
-      flippedTask = "- [ ] "+cleanTask;
+      flippedTask = "- [ ]"+cleanTask;
       modifier = -1;
     }
 
@@ -248,10 +248,13 @@ function countNewCompletedTasks(editor:Editor):number {
  * Sorts the tasks in the current note to move the completed ones to the bottom
  * @param editor the editor of the current file
  */
-export function sortTasks(editor:Editor):void {
+export function sortTasks(editor:Editor, logger?:Logger):void {
   // If no new tasks have been completed or uncompleted no need to sort
-  if(countNewCompletedTasks(editor) === 0)
+  const completedTasks = countNewCompletedTasks(editor);
+  logger?.log(`New Tasks Completed: `+completedTasks);
+  if(completedTasks === 0)
     return;
+  logger?.log("Sorting Tasks...");
   const rawFile = editor.getValue();
   const cleanFile = rawFile.replace(PROPERTIES_REGEX, "");
   const splitFile = cleanFile.split("\n");
