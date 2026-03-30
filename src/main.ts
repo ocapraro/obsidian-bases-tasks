@@ -2,7 +2,7 @@ import EditorMenuEvent from './events/EditorMenuEvent';
 import { TASK_REGEX, TYPE_DETECT_DELAY } from './constants';
 import { MarkdownView, Notice, Plugin} from 'obsidian';
 import { BasesTasksSettings, BasesTasksSettingTab, DEFAULT_SETTINGS } from 'settings/settings';
-import { moveTaskToNote, updateCurrentFileTasks, syncTasks } from 'commands';
+import { moveTaskToNote, updateCurrentFileTasks, syncTasks, sortTasks } from 'commands';
 import { Logger } from 'Logger';
 import { dragTaskPlugin } from 'extensions/DragTaskPlugin';
 
@@ -75,7 +75,7 @@ export default class BasesTasks extends Plugin {
       });
     }
 
-    // Save tasks to properties on editor
+    // On editor change event
     this.registerEvent(this.app.workspace.on("editor-change", async(editor, info)=>{
       if (!(info instanceof MarkdownView))
         return;
@@ -84,6 +84,9 @@ export default class BasesTasks extends Plugin {
       if(this.gettingTasksTimeoutID !== null)
         clearTimeout(this.gettingTasksTimeoutID);
       this.gettingTasksTimeoutID = setTimeout(()=>{
+        if(this.settings.moveCompleted)
+          sortTasks(editor);
+        // Save tasks to properties
         updateCurrentFileTasks(editor);
       }, TYPE_DETECT_DELAY) as unknown as number;
     }));

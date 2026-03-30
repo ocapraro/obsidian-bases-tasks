@@ -1,9 +1,15 @@
 import { Logger } from "Logger";
-import { PROPERTIES_REGEX, TASK_REGEX } from "./constants";
+import { COMPLETED_TASK_REGEX, INCOMPLETED_TASK_REGEX, PROPERTIES_REGEX, TASK_REGEX } from "./constants";
 import BasesTasks from "main";
 import { App, Editor, EditorPosition, EditorSelection, getAllTags, Notice, parseYaml, stringifyYaml, Vault } from "obsidian";
 import Properties from "Properties";
 import { strArraysEqual } from "utils";
+
+type TaskGroup = {
+  start:number;
+  end:number;
+  tasks:string[];
+};
 
 /**
  * 
@@ -186,6 +192,12 @@ export async function syncTasks(vault:Vault, logger?:Logger) {
   logger?.log("Syncing complete!");
 }
 
+/**
+ * Retrieves all unique tags found across all markdown files in the vault.
+ * 
+ * @param app - The Obsidian App instance providing access to vault and metadata cache
+ * @returns A Set containing all unique tags found in the vault
+ */
 export function getAllVaultTags(app:App): Set<string> {
   const tags = new Set<string>();
   
@@ -200,4 +212,94 @@ export function getAllVaultTags(app:App): Set<string> {
       tags.add(t);
   }
   return tags;
+}
+
+/**
+ * Counts the number of completed tasks since the last update
+ * @param editor the editor of the current file
+ */
+function countNewCompletedTasks(editor:Editor):number {
+  const rawFile = editor.getValue();
+  const cleanFile = rawFile.replace(PROPERTIES_REGEX, "");
+  const properties = getProperties(rawFile);
+  let workingFile = cleanFile;
+
+  let newCompletedTasks = 0;
+  properties["tasks"].forEach(task => {
+    const cleanTask = task.replace(TASK_REGEX, "").trim();
+    let flippedTask = "- [x] "+cleanTask;
+    let modifier = 1;
+    if(task.match(COMPLETED_TASK_REGEX)){
+      flippedTask = "- [ ] "+cleanTask;
+      modifier = -1;
+    }
+
+    if(workingFile.includes(task))
+      workingFile = workingFile.replace(task, "")
+    else if(workingFile.includes(flippedTask)){
+      newCompletedTasks += modifier;
+      workingFile = workingFile.replace(flippedTask, "")
+    }
+  });
+  return newCompletedTasks;
+}
+
+/**
+ * Sorts the tasks in the current note to move the completed ones to the bottom
+ * @param editor the editor of the current file
+ */
+export function sortTasks(editor:Editor):void {
+  // If no new tasks have been completed or uncompleted no need to sort
+  if(countNewCompletedTasks(editor) === 0)
+    return;
+  const rawFile = editor.getValue();
+  const cleanFile = rawFile.replace(PROPERTIES_REGEX, "");
+  const splitFile = cleanFile.split("\n");
+  const taskGroups:TaskGroup[] = [];
+  const offset = (rawFile.match(PROPERTIES_REGEX)?.[0].split("\n").length||1)-1;
+
+  let currentTaskGroup:TaskGroup = {
+    start: -1,
+    end: -1,
+    tasks: []
+  };
+  splitFile.forEach((line, i) => {
+    if(line.match(TASK_REGEX)) {
+      if (currentTaskGroup.start < 0)
+        currentTaskGroup.start = offset+i;
+      currentTaskGroup.tasks.push(line);
+    } else {
+      if(currentTaskGroup.start >= 0) {
+        currentTaskGroup.end = offset+i;
+        taskGroups.push(currentTaskGroup);
+        currentTaskGroup = {
+          start: -1,
+          end: -1,
+          tasks: []
+        };
+      }
+    }
+  });
+  
+  taskGroups.forEach(taskGroup => {
+    const sortedTasks = [...taskGroup.tasks];
+    sortedTasks.sort((a, b) => {
+      const aCompleted = a.match(COMPLETED_TASK_REGEX) ? 1 : 0;
+      const bCompleted = b.match(COMPLETED_TASK_REGEX) ? 1 : 0;
+      return aCompleted - bCompleted;
+    });
+    if(strArraysEqual(sortedTasks,taskGroup.tasks))
+      return;
+    editor.replaceRange(
+      sortedTasks.join("\n")+"\n",
+      {
+        line:taskGroup.start,
+        ch:0
+      },
+      {
+        line:taskGroup.end,
+        ch:0
+      }
+    );
+  });
 }
