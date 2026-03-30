@@ -234,11 +234,11 @@ function countNewCompletedTasks(editor:Editor):number {
       modifier = -1;
     }
 
-    if(workingFile.includes(task))
-      workingFile = workingFile.replace(task, "")
-    else if(workingFile.includes(flippedTask)){
+    if(workingFile.includes(task+"\n"))
+      workingFile = workingFile.replace(task+"\n", "")
+    else if(workingFile.includes(flippedTask+"\n")){
       newCompletedTasks += modifier;
-      workingFile = workingFile.replace(flippedTask, "")
+      workingFile = workingFile.replace(flippedTask+"\n", "")
     }
   });
   return newCompletedTasks;
