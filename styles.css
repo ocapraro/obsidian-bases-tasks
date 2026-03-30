@@ -11,3 +11,31 @@
 .setting-item.bases-tasks-hidden {
   display: none;
 }
+
+.task-drag-widget {
+  display: block;
+  width: 12px;
+  height: 28px;
+  cursor: pointer;
+  left: -10px;
+  position: absolute;
+  color: var(--checkbox-border-color);
+  letter-spacing: -2px;
+  opacity: 0;
+}
+
+.task-drag-widget:hover {
+  background-size: 6px 6px;
+  position: absolute;
+  width: 100%;
+  opacity: 1;
+}
+
+.HyperMD-task-line.cm-line.bases-tasks-hidden {
+  visibility: hidden;
+}
+
+.HyperMD-task-line.cm-line.bases-tasks-selecting, 
+#calendar-container tbody td .day.bases-tasks-selecting {
+  background-color: rgba(73, 79, 131, 0.525);
+}
