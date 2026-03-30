@@ -7,6 +7,7 @@ import { getAllVaultTags, syncTasks } from "commands";
 
 export interface BasesTasksSettings {
   draggableTasks:boolean;
+  moveCompleted:boolean;
   dailyNoteFolderPath:string;
   moveToTomorrowOption:boolean;
   moveToDailyOption:boolean;
@@ -19,6 +20,7 @@ export interface BasesTasksSettings {
 
 export const DEFAULT_SETTINGS: BasesTasksSettings = {
   draggableTasks:true,
+  moveCompleted:true,
   dailyNoteFolderPath:"",
   moveToTomorrowOption:false,
   moveToDailyOption:false,
@@ -39,11 +41,11 @@ export class BasesTasksSettingTab extends PluginSettingTab {
     new Setting(containerEl)
     .setName("Sync all tasks")
     .setDesc("Loads all tasks found in notes into properties.")
-    .addButton((button)=>{
-      button
+    .addButton((button)=>button
       .setTooltip("Sync tasks")
       .setIcon("refresh-ccw")
-      .onClick(async()=>{await syncTasks(this.plugin.app.vault, this.plugin.logger)})});
+      .onClick(async()=>{await syncTasks(this.plugin.app.vault, this.plugin.logger)})
+    );
 
     new Setting(containerEl)
     .setName("Draggable tasks")
@@ -52,6 +54,17 @@ export class BasesTasksSettingTab extends PluginSettingTab {
       .setValue(this.plugin.settings.draggableTasks)
       .onChange(async (value)=> {
         this.plugin.settings.draggableTasks = value;
+        await this.plugin.saveSettings();
+      })
+    );
+
+    new Setting(containerEl)
+    .setName("Move tasks when complete")
+    .setDesc("Automatically move completed tasks to the bottom of their checklist")
+    .addToggle(t=>t
+      .setValue(this.plugin.settings.moveCompleted)
+      .onChange(async (value)=> {
+        this.plugin.settings.moveCompleted = value;
         await this.plugin.saveSettings();
       })
     );
